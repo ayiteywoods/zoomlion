@@ -1,4 +1,8 @@
-import { SIP_SESSION_COOKIE } from "@/lib/system-session-constants";
+import { isHubAppReferer } from "@/lib/corporate-gateway-middleware";
+import {
+  SIP_BROWSING_COOKIE,
+  SIP_SESSION_COOKIE,
+} from "@/lib/system-session-constants";
 
 export const SIP_GATEWAY_PATH = "/systems/gateway/sip";
 
@@ -54,8 +58,19 @@ export function shouldRedirectHubPathToSipGateway(
   pathname: string,
   request: {
     cookies: { get: (name: string) => { value?: string } | undefined };
+    headers: { get: (name: string) => string | null };
+    url: string;
   }
 ): boolean {
   if (!isSipHubCollisionPath(pathname)) return false;
-  return Boolean(request.cookies.get(SIP_SESSION_COOKIE)?.value);
+  if (!request.cookies.get(SIP_SESSION_COOKIE)?.value) return false;
+
+  const referer = request.headers.get("referer");
+  if (isSipGatewayReferer(referer, request.url)) return true;
+
+  const browsingSip =
+    request.cookies.get(SIP_BROWSING_COOKIE)?.value === "1";
+  if (browsingSip && !isHubAppReferer(referer, request.url)) return true;
+
+  return false;
 }

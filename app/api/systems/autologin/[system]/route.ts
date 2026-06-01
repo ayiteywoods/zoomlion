@@ -43,13 +43,21 @@ export async function POST(request: Request, context: RouteContext) {
   const { phone, password } = await readCredentials(request);
 
   if (!phone || !password) {
-    return NextResponse.redirect(config.loginUrl);
+    const fallback =
+      system === "sip"
+        ? new URL("/login?reason=sip", request.url)
+        : config.loginUrl;
+    return NextResponse.redirect(fallback);
   }
 
   const result = await verifySystemAccess(system, phone, password);
 
   if (!result.ok || result.launchMode !== "form" || !result.form) {
-    return NextResponse.redirect(config.loginUrl);
+    const fallback =
+      system === "sip"
+        ? new URL("/login?reason=sip", request.url)
+        : config.loginUrl;
+    return NextResponse.redirect(fallback);
   }
 
   const html = buildAutoSubmitHtml(
@@ -72,6 +80,10 @@ export async function GET(_request: Request, context: RouteContext) {
 
   if (!isExternalSystemId(systemParam)) {
     return NextResponse.json({ message: "Unknown system." }, { status: 404 });
+  }
+
+  if (systemParam === "sip") {
+    return NextResponse.redirect(new URL("/login?reason=sip", _request.url));
   }
 
   return NextResponse.redirect(getSystemLaunchConfig(systemParam).loginUrl);

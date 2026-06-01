@@ -13,6 +13,14 @@ export const SIP_GATEWAY_ENTRY = "/systems/gateway/sip";
 const SIP_LOGIN_URL = `${SIP_ORIGIN}/login`;
 const SIP_ENTRY_URL = `${SIP_ORIGIN}/`;
 
+export function isSipLoginPageHtml(html: string): boolean {
+  return (
+    html.includes('name="email"') &&
+    html.includes('name="password"') &&
+    (html.includes("/login") || html.includes("Sign In") || html.includes("Login"))
+  );
+}
+
 export type SipWebLoginResult =
   | { ok: true; cookieHeader: string }
   | { ok: false; message?: string };

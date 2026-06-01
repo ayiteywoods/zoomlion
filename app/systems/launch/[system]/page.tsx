@@ -90,7 +90,7 @@ export default function SystemLaunchPage() {
     const credentials = getAuthCredentials();
 
     if (!credentials) {
-      window.location.href = config.loginUrl;
+      router.replace("/login");
       return;
     }
 
@@ -140,9 +140,9 @@ export default function SystemLaunchPage() {
         if (system === "sip") {
           const sipEmail = resolveSipEmail(credentials!);
           if (!sipEmail) {
-            setMessage("SIP requires an email address. Opening sign-in page…");
+            setMessage("SIP requires an email address. Returning to hub sign-in…");
             window.setTimeout(() => {
-              window.location.href = config.loginUrl;
+              router.replace("/login?reason=sip-email");
             }, 1200);
             return;
           }
@@ -177,7 +177,7 @@ export default function SystemLaunchPage() {
               "You do not have access to this system. Opening sign-in page…"
           );
           window.setTimeout(() => {
-            window.location.href = payload.loginUrl;
+            router.replace("/login");
           }, 1200);
           return;
         }
@@ -203,7 +203,7 @@ export default function SystemLaunchPage() {
         }, 800);
       } catch {
         if (!cancelled) {
-          window.location.href = config.loginUrl;
+          router.replace("/login");
         }
       }
     }

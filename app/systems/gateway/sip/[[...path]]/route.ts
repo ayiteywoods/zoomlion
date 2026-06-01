@@ -2,19 +2,33 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import {
   SIP_ORIGIN,
+  isSipLoginPageHtml,
   mergeSipCookieHeader,
   rewriteSipGatewayHtml,
 } from "@/lib/sip-web-auth";
 import { parseSetCookies } from "@/lib/system-auth-cookies";
 import { attachSystemSessionCookie } from "@/lib/system-session-cookie";
-import { getSystemLaunchConfig } from "@/lib/system-launch";
 import { SIP_GATEWAY_PATH } from "@/lib/sip-gateway-middleware";
 import {
-  getSystemSession,
+  SIP_BROWSING_COOKIE,
   SIP_SESSION_COOKIE,
+} from "@/lib/system-session-constants";
+import {
+  getSystemSession,
 } from "@/lib/system-session-store";
 
-const sipLoginUrl = getSystemLaunchConfig("sip").loginUrl;
+function redirectToHubLogin(requestUrl: URL) {
+  const response = NextResponse.redirect(new URL("/login", requestUrl.origin), 303);
+  for (const name of [SIP_SESSION_COOKIE, SIP_BROWSING_COOKIE] as const) {
+    response.cookies.set(name, "", {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+    });
+  }
+  return response;
+}
 
 /** Upstream paths to try when /profile is missing (Laravel apps vary). */
 const SIP_PROFILE_FALLBACKS = ["users/profile", "user/profile", "account"] as const;
@@ -35,6 +49,12 @@ function rewriteLocation(location: string | null, requestUrl: URL): string | nul
       ? target.pathname.slice(basePath.length) || "/"
       : target.pathname;
 
+    const loginPath =
+      relativePath === "/login" || relativePath.startsWith("/login/");
+    if (loginPath) {
+      return new URL("/login", requestUrl.origin).toString();
+    }
+
     const normalized =
       relativePath === "/" ||
       relativePath === "/dashboard" ||
@@ -49,27 +69,28 @@ function rewriteLocation(location: string | null, requestUrl: URL): string | nul
 }
 
 async function proxySipRequest(request: Request, context: RouteContext) {
+  const requestUrl = new URL(request.url);
   const cookieStore = await cookies();
   const sealed = cookieStore.get(SIP_SESSION_COOKIE)?.value;
 
   if (!sealed) {
-    return NextResponse.redirect(sipLoginUrl, 303);
+    return redirectToHubLogin(requestUrl);
   }
 
   const session = getSystemSession(sealed);
   if (!session) {
-    const response = NextResponse.redirect(sipLoginUrl, 303);
-    response.cookies.set(SIP_SESSION_COOKIE, "", {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 0,
-    });
-    return response;
+    return redirectToHubLogin(requestUrl);
   }
 
   const { path = [] } = await context.params;
-  const requestUrl = new URL(request.url);
+  const targetPath = path.join("/");
+
+  if (
+    targetPath === "login" ||
+    targetPath.startsWith("login/")
+  ) {
+    return redirectToHubLogin(requestUrl);
+  }
 
   if (path.length === 1 && (path[0] === "home" || path[0] === "dashboard")) {
     const redirectUrl = new URL(SIP_GATEWAY_PATH, requestUrl.origin);
@@ -77,7 +98,6 @@ async function proxySipRequest(request: Request, context: RouteContext) {
     return NextResponse.redirect(redirectUrl, 302);
   }
 
-  const targetPath = path.join("/");
   const targetUrl = targetPath
     ? `${SIP_ORIGIN}/${targetPath}${requestUrl.search}`
     : `${SIP_ORIGIN}/${requestUrl.search}`;
@@ -143,8 +163,17 @@ async function proxySipRequest(request: Request, context: RouteContext) {
 
   if (upstream.status >= 300 && upstream.status < 400) {
     const location = rewriteLocation(upstream.headers.get("location"), requestUrl);
-    if (location) {
-      const response = NextResponse.redirect(location, upstream.status);
+    const redirectTarget =
+      location ?? upstream.headers.get("location");
+    if (redirectTarget) {
+      const redirectUrl = new URL(redirectTarget, requestUrl.origin);
+      if (
+        redirectUrl.origin !== requestUrl.origin ||
+        redirectUrl.pathname === "/login"
+      ) {
+        return redirectToHubLogin(requestUrl);
+      }
+      const response = NextResponse.redirect(redirectUrl, upstream.status);
       attachSystemSessionCookie(
         response,
         SIP_SESSION_COOKIE,
@@ -152,6 +181,7 @@ async function proxySipRequest(request: Request, context: RouteContext) {
       );
       return response;
     }
+    return redirectToHubLogin(requestUrl);
   }
 
   const upstreamType =
@@ -159,7 +189,11 @@ async function proxySipRequest(request: Request, context: RouteContext) {
   let body: ArrayBuffer | string = await upstream.arrayBuffer();
 
   if (upstreamType.includes("text/html")) {
-    body = rewriteSipGatewayHtml(new TextDecoder().decode(body), gatewayPrefix);
+    const html = new TextDecoder().decode(body);
+    if (isSipLoginPageHtml(html)) {
+      return redirectToHubLogin(requestUrl);
+    }
+    body = rewriteSipGatewayHtml(html, gatewayPrefix);
   }
 
   const response = new NextResponse(body, {

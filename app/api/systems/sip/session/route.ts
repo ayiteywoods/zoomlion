@@ -13,13 +13,28 @@ import { SIP_SESSION_COOKIE } from "@/lib/system-session-store";
 
 const sipConfig = getSystemLaunchConfig("sip");
 
-function redirectToSipLogin(redirectOnSuccess: boolean) {
+function hubLoginTarget(request: Request, reason?: string) {
+  const url = new URL("/login", request.url);
+  if (reason) url.searchParams.set("reason", reason);
+  return url;
+}
+
+function redirectToHubLogin(
+  request: Request,
+  redirectOnSuccess: boolean,
+  reason?: string
+) {
+  const target = hubLoginTarget(request, reason);
+
   if (redirectOnSuccess) {
-    return redirectAfterFormPost(sipConfig.loginUrl);
+    return redirectAfterFormPost(target);
   }
 
   return new NextResponse(
-    buildSystemSessionBootstrapHtml(sipConfig.loginUrl, sipConfig.label),
+    buildSystemSessionBootstrapHtml(
+      `${target.pathname}${target.search}`,
+      sipConfig.label
+    ),
     {
       status: 200,
       headers: {
@@ -60,7 +75,7 @@ export async function POST(request: Request) {
     const result = await createSipGatewaySession(email, password);
 
     if (!result.ok) {
-      return redirectToSipLogin(redirectOnSuccess);
+      return redirectToHubLogin(request, redirectOnSuccess, "sip");
     }
 
     const openPath = SIP_GATEWAY_ENTRY;
@@ -91,7 +106,7 @@ export async function POST(request: Request) {
     attachSystemSessionCookie(response, SIP_SESSION_COOKIE, result.cookieHeader);
     return response;
   } catch {
-    return redirectToSipLogin(true);
+    return redirectToHubLogin(request, true, "sip");
   }
 }
 

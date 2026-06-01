@@ -10,12 +10,14 @@ import {
 } from "@/lib/auth";
 import { shouldRedirectHubPathToCorporateGateway } from "@/lib/corporate-gateway-middleware";
 import {
+  isSipGatewayReferer,
   resolveSipGatewayUrlForHubPath,
   shouldRedirectHubPathToSipGateway,
 } from "@/lib/sip-gateway-middleware";
 import {
   CORPORATE_BROWSING_COOKIE,
   SIP_BROWSING_COOKIE,
+  SIP_SESSION_COOKIE,
 } from "@/lib/system-session-constants";
 
 const PUBLIC_PATHS = ["/login", "/reset-password"];
@@ -23,7 +25,6 @@ const PUBLIC_PATHS = ["/login", "/reset-password"];
 function isPublicPath(pathname: string) {
   if (pathname.startsWith("/api/auth/")) return true;
   if (pathname.startsWith("/api/systems/")) return true;
-  if (pathname.startsWith("/systems/gateway/")) return true;
   if (pathname.startsWith("/systems/launch/")) return true;
 
   return PUBLIC_PATHS.some(
@@ -64,9 +65,50 @@ export function middleware(request: NextRequest) {
   }
 
   if (pathname === "/") {
-    return NextResponse.redirect(
+    const response = NextResponse.redirect(
       new URL(isAuthenticated ? "/dashboard" : "/login", request.url)
     );
+    if (!isAuthenticated) {
+      response.cookies.set(SIP_BROWSING_COOKIE, "", { path: "/", maxAge: 0 });
+      response.cookies.set(SIP_SESSION_COOKIE, "", {
+        httpOnly: true,
+        sameSite: "lax",
+        path: "/",
+        maxAge: 0,
+      });
+    }
+    return response;
+  }
+
+  if (
+    pathname.startsWith("/systems/gateway/sip") &&
+    !isAuthenticated
+  ) {
+    const response = NextResponse.redirect(new URL("/login", request.url));
+    response.cookies.set(SIP_BROWSING_COOKIE, "", { path: "/", maxAge: 0 });
+    response.cookies.set(SIP_SESSION_COOKIE, "", {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+    });
+    return response;
+  }
+
+  if (pathname === "/login" && !isSipGatewayReferer(request.headers.get("referer"), request.url)) {
+    const response = NextResponse.next();
+    response.cookies.set(SIP_BROWSING_COOKIE, "", { path: "/", maxAge: 0 });
+    response.cookies.set(SIP_SESSION_COOKIE, "", {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+    });
+    if (isAuthenticated) {
+      const target = resolvePostLoginPath(request.nextUrl.searchParams.get("from"));
+      return NextResponse.redirect(new URL(target, request.url));
+    }
+    return response;
   }
 
   if (isAuthenticated && pathname === "/login") {
