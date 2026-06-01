@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { ActionCard } from "@/components/action-card";
 import { AnimatedBackground } from "@/components/animated-background";
+import { InlineAlert } from "@/components/inline-alert";
 import {
   RecycleBinIcon,
   BuildingIcon,
@@ -10,8 +12,15 @@ import {
   cardIconClass,
 } from "@/components/icons";
 import { useDashboard } from "@/components/dashboard-provider";
-import { cardSystemMeta } from "@/lib/dashboard-data";
-import { dashboardCards, type DashboardCardId } from "@/lib/dashboard-cards";
+import { CUSTOM_SYSTEMS_UPDATED_EVENT } from "@/lib/custom-systems";
+import { getCardSystemMeta } from "@/lib/dashboard-card-meta";
+import {
+  findDashboardCard,
+  getAllDashboardCards,
+  type DashboardCardId,
+} from "@/lib/dashboard-cards";
+import { launchExternalSystem } from "@/lib/launch-system-client";
+import { isExternalSystemId } from "@/lib/system-launch";
 
 const hoverIcons = {
   iwaste: <RecycleBinIcon className={cardIconClass} />,
@@ -26,15 +35,59 @@ type ActionCardsProps = {
 
 export function ActionCards({ hoveredCardId, onCardHover }: ActionCardsProps) {
   const { visibleCardIds } = useDashboard();
-  const visibleCards = dashboardCards.filter((card) =>
-    visibleCardIds.includes(card.id)
-  );
+  const [cardsVersion, setCardsVersion] = useState(0);
+  const [launchError, setLaunchError] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
+  const [launchingId, setLaunchingId] = useState<DashboardCardId | null>(null);
+
+  useEffect(() => {
+    function refresh() {
+      setCardsVersion((value) => value + 1);
+    }
+
+    window.addEventListener(CUSTOM_SYSTEMS_UPDATED_EVENT, refresh);
+    return () => window.removeEventListener(CUSTOM_SYSTEMS_UPDATED_EVENT, refresh);
+  }, []);
+
+  const allCards = useMemo(() => getAllDashboardCards(), [cardsVersion]);
+  const visibleCards = allCards.filter((card) => visibleCardIds.includes(card.id));
+
+  function handleLaunch(cardId: DashboardCardId) {
+    if (!isExternalSystemId(cardId) || launchingId) return;
+
+    setLaunchError(null);
+    setLaunchingId(cardId);
+
+    const result = launchExternalSystem(cardId);
+
+    window.setTimeout(() => setLaunchingId(null), 1200);
+
+    if (!result.ok) {
+      const label = findDashboardCard(cardId)?.title ?? "System";
+      setLaunchError({
+        title: `Could not open ${label}`,
+        message: result.message,
+      });
+    }
+  }
 
   return (
     <section className="animate-fade-in relative flex min-h-0 flex-1 flex-col justify-center overflow-visible [animation-delay:350ms]">
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
         <AnimatedBackground />
       </div>
+      {launchError && (
+        <InlineAlert
+          variant="error"
+          title={launchError.title}
+          onDismiss={() => setLaunchError(null)}
+          className="relative z-10 mb-3 w-full animate-fade-in"
+        >
+          {launchError.message}
+        </InlineAlert>
+      )}
       {visibleCards.length === 0 ? (
         <p className="relative text-center text-sm text-muted">
           No systems available for your role. Change role in Profile to explore
@@ -53,7 +106,7 @@ export function ActionCards({ hoveredCardId, onCardHover }: ActionCardsProps) {
           }`}
         >
           {visibleCards.map((card, index) => {
-            const meta = cardSystemMeta[card.id];
+            const meta = getCardSystemMeta(card.id);
             return (
               <ActionCard
                 key={card.id}
@@ -63,7 +116,6 @@ export function ActionCards({ hoveredCardId, onCardHover }: ActionCardsProps) {
                 external={meta.external}
                 status={meta.status}
                 isPrimary={meta.isPrimary}
-                actionLabel={meta.actionLabel}
                 logoSrc={card.logoSrc}
                 logoAlt={card.logoAlt}
                 logoImageClassName={card.logoImageClassName}
@@ -82,6 +134,15 @@ export function ActionCards({ hoveredCardId, onCardHover }: ActionCardsProps) {
                 isActive={hoveredCardId === card.id}
                 onHoverStart={() => onCardHover(card.id)}
                 onHoverEnd={() => onCardHover(null)}
+                onLaunch={
+                  isExternalSystemId(card.id)
+                    ? () => handleLaunch(card.id)
+                    : undefined
+                }
+                launchDisabled={launchingId !== null}
+                actionLabel={
+                  launchingId === card.id ? "Opening…" : meta.actionLabel
+                }
               />
             );
           })}

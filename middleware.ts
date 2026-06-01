@@ -16,9 +16,19 @@ import {
 } from "@/lib/sip-gateway-middleware";
 import {
   CORPORATE_BROWSING_COOKIE,
+  CORPORATE_SESSION_COOKIE,
+  IWASTE_SESSION_COOKIE,
   SIP_BROWSING_COOKIE,
   SIP_SESSION_COOKIE,
 } from "@/lib/system-session-constants";
+
+function hasSystemGatewaySession(request: NextRequest): boolean {
+  return Boolean(
+    request.cookies.get(IWASTE_SESSION_COOKIE)?.value ||
+      request.cookies.get(CORPORATE_SESSION_COOKIE)?.value ||
+      request.cookies.get(SIP_SESSION_COOKIE)?.value
+  );
+}
 
 const PUBLIC_PATHS = ["/login", "/reset-password"];
 
@@ -117,6 +127,13 @@ export function middleware(request: NextRequest) {
   }
 
   if (!isAuthenticated && !isPublicPath(pathname)) {
+    if (
+      pathname.startsWith("/systems/gateway/") &&
+      hasSystemGatewaySession(request)
+    ) {
+      return NextResponse.next();
+    }
+
     const loginUrl = new URL("/login", request.url);
     if (pathname !== "/dashboard") {
       loginUrl.searchParams.set("from", pathname);

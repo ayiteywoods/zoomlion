@@ -29,9 +29,12 @@ function redirectToIwasteLogin(redirectOnSuccess: boolean) {
 }
 
 export async function POST(request: Request) {
+  let redirectOnSuccess = false;
+
   try {
-    const { phone, password, redirectOnSuccess } =
-      await readSystemLaunchCredentials(request);
+    const credentials = await readSystemLaunchCredentials(request);
+    const { phone, password } = credentials;
+    redirectOnSuccess = credentials.redirectOnSuccess;
 
     if (!phone || !password) {
       if (redirectOnSuccess) {
@@ -51,7 +54,16 @@ export async function POST(request: Request) {
     const result = await createIwasteGatewaySession(phone, password);
 
     if (!result.ok) {
-      return redirectToIwasteLogin(redirectOnSuccess);
+      if (redirectOnSuccess) {
+        return redirectToIwasteLogin(true);
+      }
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Unable to sign in to iWaste with your hub credentials.",
+        },
+        { status: 401 }
+      );
     }
 
     const openPath = "/systems/gateway/iwaste/home";
@@ -66,19 +78,7 @@ export async function POST(request: Request) {
       return response;
     }
 
-    const response = new NextResponse(
-      buildSystemSessionBootstrapHtml(
-        new URL(openPath, request.url).pathname,
-        iwasteConfig.label
-      ),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-          "Cache-Control": "no-store",
-        },
-      }
-    );
+    const response = NextResponse.json({ ok: true, openUrl: openPath });
     attachSystemSessionCookie(
       response,
       IWASTE_SESSION_COOKIE,
@@ -86,7 +86,13 @@ export async function POST(request: Request) {
     );
     return response;
   } catch {
-    return redirectToIwasteLogin(true);
+    if (redirectOnSuccess) {
+      return redirectToIwasteLogin(true);
+    }
+    return NextResponse.json(
+      { ok: false, message: "Unable to start iWaste session." },
+      { status: 500 }
+    );
   }
 }
 

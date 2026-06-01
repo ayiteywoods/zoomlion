@@ -16,6 +16,7 @@ import {
   type UserRole,
 } from "@/lib/permissions";
 import type { DashboardCardId } from "@/lib/dashboard-cards";
+import { CUSTOM_SYSTEMS_UPDATED_EVENT } from "@/lib/custom-systems";
 import {
   defaultBrandTheme,
   defaultThemeMode,
@@ -92,6 +93,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [customSystemsVersion, setCustomSystemsVersion] = useState(0);
   const [userName, setUserName] = useState("");
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
   const [lastLogin, setLastLogin] = useState(defaultUser.lastLogin);
@@ -193,6 +195,19 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   }, [hydrated, themeMode, brandTheme, systemDark]);
 
   useEffect(() => {
+    function onCustomSystemsUpdated() {
+      setCustomSystemsVersion((value) => value + 1);
+    }
+
+    window.addEventListener(CUSTOM_SYSTEMS_UPDATED_EVENT, onCustomSystemsUpdated);
+    return () =>
+      window.removeEventListener(
+        CUSTOM_SYSTEMS_UPDATED_EVENT,
+        onCustomSystemsUpdated
+      );
+  }, []);
+
+  useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
       if (
         e.key === "?" &&
@@ -286,6 +301,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       setSettingsOpen,
     }),
     [
+      customSystemsVersion,
       role,
       organizationId,
       organization,

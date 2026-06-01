@@ -28,11 +28,15 @@ export async function readSystemLaunchCredentials(
       phone?: string;
       username?: string;
       password?: string;
+      corporate_login_id?: string;
+      sip_email?: string;
     };
 
     return {
       phone: (body.phone ?? body.username ?? "").trim(),
       password: body.password ?? "",
+      corporateLoginId: body.corporate_login_id?.trim() || undefined,
+      sipEmail: body.sip_email?.trim() || undefined,
       redirectOnSuccess: false,
     };
   }

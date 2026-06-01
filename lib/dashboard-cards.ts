@@ -1,4 +1,15 @@
-export type DashboardCardId = "iwaste" | "corporate" | "sip" | "add-company";
+import {
+  getCustomDashboardCards,
+  isCustomCardId,
+} from "@/lib/custom-systems";
+
+export type BuiltInDashboardCardId =
+  | "iwaste"
+  | "corporate"
+  | "sip"
+  | "add-company";
+
+export type DashboardCardId = BuiltInDashboardCardId | `custom-${string}`;
 
 export const DEFAULT_HERO_DESCRIPTION =
   "Select a system below to continue. Hover a card for a short summary.";
@@ -53,17 +64,31 @@ export const dashboardCards: DashboardCard[] = [
     id: "add-company",
     title: "Add New Company",
     cardDescription:
-      "Register a company with profiles, users, and service setup.",
+      "Add a system with name, description, URL, and logo to the hub.",
     heroDescription:
-      "Register a new company on the platform to set up waste management profiles, users, and service configurations.",
+      "Add a new system to the hub with a name, description, URL, and logo. It will appear on your dashboard for quick access.",
     variant: "rose",
   },
 ];
 
+export function getAllDashboardCards(): DashboardCard[] {
+  const customCards = getCustomDashboardCards();
+  const withoutAdd = dashboardCards.filter((card) => card.id !== "add-company");
+  const addCard = dashboardCards.find((card) => card.id === "add-company");
+  if (!addCard) return [...withoutAdd, ...customCards];
+  return [...withoutAdd, ...customCards, addCard];
+}
+
+export function findDashboardCard(
+  cardId: DashboardCardId
+): DashboardCard | undefined {
+  if (isCustomCardId(cardId)) {
+    return getCustomDashboardCards().find((card) => card.id === cardId);
+  }
+  return dashboardCards.find((card) => card.id === cardId);
+}
+
 export function getHeroDescription(cardId: DashboardCardId | null): string {
   if (!cardId) return DEFAULT_HERO_DESCRIPTION;
-  return (
-    dashboardCards.find((card) => card.id === cardId)?.heroDescription ??
-    DEFAULT_HERO_DESCRIPTION
-  );
+  return findDashboardCard(cardId)?.heroDescription ?? DEFAULT_HERO_DESCRIPTION;
 }

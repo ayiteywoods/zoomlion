@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { globalSearchItems } from "@/lib/dashboard-data";
+import { launchExternalSystem } from "@/lib/launch-system-client";
+import { isExternalSystemId } from "@/lib/system-launch";
 
 export const navSearchInputClass =
   "h-10 w-full appearance-none rounded-xl border border-gray-200/80 bg-gray-50 py-2 pl-11 pr-16 text-sm text-gray-900 shadow-sm outline-none transition-all duration-300 placeholder:text-gray-500 hover:border-gray-300 hover:bg-gray-50 focus:border-blue-400 focus:bg-gray-50 focus:ring-2 focus:ring-blue-400/25 [&::-webkit-search-cancel-button]:hidden";
@@ -119,7 +121,14 @@ export function GlobalSearch({
                   <Link
                     href={item.href}
                     onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
+                    onClick={(e) => {
+                      if (
+                        item.openInNewTab &&
+                        isExternalSystemId(item.id)
+                      ) {
+                        e.preventDefault();
+                        launchExternalSystem(item.id);
+                      }
                       setQuery("");
                       setOpen(false);
                     }}

@@ -1,4 +1,7 @@
-import type { DashboardCardId } from "@/lib/dashboard-cards";
+import type {
+  BuiltInDashboardCardId,
+  DashboardCardId,
+} from "@/lib/dashboard-cards";
 import type { UserRole } from "@/lib/permissions";
 
 export type SystemStatus = "available" | "maintenance" | "new";
@@ -72,6 +75,8 @@ export type SearchItem = {
   description: string;
   href: string;
   category: "System" | "Site" | "Action";
+  /** Open in a new browser tab (used for external system launch). */
+  openInNewTab?: boolean;
 };
 
 export const globalSearchItems: SearchItem[] = [
@@ -81,6 +86,7 @@ export const globalSearchItems: SearchItem[] = [
     description: "Operations, routes, and collections",
     href: "/systems/launch/iwaste",
     category: "System",
+    openInNewTab: true,
   },
   {
     id: "corporate",
@@ -88,6 +94,7 @@ export const globalSearchItems: SearchItem[] = [
     description: "Policies, reporting, and compliance",
     href: "/systems/launch/corporate",
     category: "System",
+    openInNewTab: true,
   },
   {
     id: "sip",
@@ -95,6 +102,7 @@ export const globalSearchItems: SearchItem[] = [
     description: "Integrated waste management and scheduling",
     href: "/systems/launch/sip",
     category: "System",
+    openInNewTab: true,
   },
   {
     id: "add-company",
@@ -120,7 +128,7 @@ export const globalSearchItems: SearchItem[] = [
 ];
 
 export const cardSystemMeta: Record<
-  DashboardCardId,
+  BuiltInDashboardCardId,
   {
     href: string;
     external?: boolean;
@@ -131,17 +139,20 @@ export const cardSystemMeta: Record<
 > = {
   iwaste: {
     href: "/systems/launch/iwaste",
+    external: true,
     status: "available",
     isPrimary: true,
     actionLabel: "Go to iWaste",
   },
   corporate: {
     href: "/systems/launch/corporate",
+    external: true,
     status: "available",
     actionLabel: "Go to PSL Corporate",
   },
   sip: {
     href: "/systems/launch/sip",
+    external: true,
     status: "available",
     actionLabel: "Go to SIP",
   },

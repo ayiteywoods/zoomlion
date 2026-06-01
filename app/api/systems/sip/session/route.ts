@@ -3,7 +3,7 @@ import { resolveSipEmail } from "@/lib/auth-credentials";
 import { createSipGatewaySession } from "@/lib/system-auth";
 import { getSystemLaunchConfig } from "@/lib/system-launch";
 import { attachSystemSessionCookie } from "@/lib/system-session-cookie";
-import { buildSystemSessionBootstrapHtml } from "@/lib/system-session-bootstrap";
+import { buildSystemSessionErrorHtml } from "@/lib/system-session-bootstrap";
 import {
   readSystemLaunchCredentials,
   redirectAfterFormPost,
@@ -13,42 +13,30 @@ import { SIP_SESSION_COOKIE } from "@/lib/system-session-store";
 
 const sipConfig = getSystemLaunchConfig("sip");
 
-function hubLoginTarget(request: Request, reason?: string) {
-  const url = new URL("/login", request.url);
-  if (reason) url.searchParams.set("reason", reason);
-  return url;
-}
-
-function redirectToHubLogin(
-  request: Request,
-  redirectOnSuccess: boolean,
-  reason?: string
+function sipLaunchFailureResponse(
+  message: string,
+  redirectOnSuccess: boolean
 ) {
-  const target = hubLoginTarget(request, reason);
-
-  if (redirectOnSuccess) {
-    return redirectAfterFormPost(target);
+  if (!redirectOnSuccess) {
+    return NextResponse.json({ ok: false, message }, { status: 401 });
   }
 
-  return new NextResponse(
-    buildSystemSessionBootstrapHtml(
-      `${target.pathname}${target.search}`,
-      sipConfig.label
-    ),
-    {
-      status: 200,
-      headers: {
-        "Content-Type": "text/html; charset=utf-8",
-        "Cache-Control": "no-store",
-      },
-    }
-  );
+  return new NextResponse(buildSystemSessionErrorHtml(message, sipConfig.label), {
+    status: 200,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+    },
+  });
 }
 
 export async function POST(request: Request) {
+  let redirectOnSuccess = false;
+
   try {
     const credentials = await readSystemLaunchCredentials(request);
-    const { password, redirectOnSuccess } = credentials;
+    const { password } = credentials;
+    redirectOnSuccess = credentials.redirectOnSuccess;
     const email = resolveSipEmail({
       phone: credentials.phone,
       password: credentials.password,
@@ -57,25 +45,20 @@ export async function POST(request: Request) {
     });
 
     if (!email || !password) {
-      if (redirectOnSuccess) {
-        return redirectAfterFormPost(
-          new URL("/login?from=/dashboard", request.url)
-        );
-      }
-      return NextResponse.json(
-        {
-          ok: false,
-          message:
-            "SIP requires an email address. Sign in to the hub with your SIP email.",
-        },
-        { status: 401 }
+      return sipLaunchFailureResponse(
+        "SIP requires an email address. Sign in to the hub with the email and password you use for SIP, or add your SIP email to your hub profile.",
+        redirectOnSuccess
       );
     }
 
     const result = await createSipGatewaySession(email, password);
 
     if (!result.ok) {
-      return redirectToHubLogin(request, redirectOnSuccess, "sip");
+      return sipLaunchFailureResponse(
+        result.message ??
+          "Unable to sign in to SIP with your hub credentials. Corporate and SIP accounts may use different logins.",
+        redirectOnSuccess
+      );
     }
 
     const openPath = SIP_GATEWAY_ENTRY;
@@ -90,23 +73,14 @@ export async function POST(request: Request) {
       return response;
     }
 
-    const response = new NextResponse(
-      buildSystemSessionBootstrapHtml(
-        new URL(openPath, request.url).pathname,
-        sipConfig.label
-      ),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "text/html; charset=utf-8",
-          "Cache-Control": "no-store",
-        },
-      }
-    );
+    const response = NextResponse.json({ ok: true, openUrl: openPath });
     attachSystemSessionCookie(response, SIP_SESSION_COOKIE, result.cookieHeader);
     return response;
   } catch {
-    return redirectToHubLogin(request, true, "sip");
+    return sipLaunchFailureResponse(
+      "Unable to start SIP session.",
+      redirectOnSuccess
+    );
   }
 }
 

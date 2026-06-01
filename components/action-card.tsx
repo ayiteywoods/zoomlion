@@ -152,6 +152,8 @@ type ActionCardProps = {
   isActive?: boolean;
   onHoverStart?: () => void;
   onHoverEnd?: () => void;
+  onLaunch?: () => void;
+  launchDisabled?: boolean;
 };
 
 export function ActionCard({
@@ -172,6 +174,8 @@ export function ActionCard({
   isActive = false,
   onHoverStart,
   onHoverEnd,
+  onLaunch,
+  launchDisabled = false,
 }: ActionCardProps) {
   const styles = variantStyles[variant];
   const showHoverBadge = Boolean(hoverIcon);
@@ -263,14 +267,23 @@ export function ActionCard({
                 className={`relative h-full w-full transition-transform duration-500 ease-out group-hover:scale-110 ${logoAnimationByVariant[variant]} ${isActive ? "scale-110" : ""}`}
                 style={{ animationDelay: `${(animationDelay % 400) + 200}ms` }}
               >
-                <Image
-                  src={logoSrc}
-                  alt={logoAlt ?? title}
-                  width={160}
-                  height={160}
-                  className={`h-full w-full object-contain drop-shadow-[0_8px_24px_rgba(23,37,84,0.15)] transition-all duration-300 group-hover:drop-shadow-[0_12px_28px_rgba(23,37,84,0.22)] ${logoImageClassName ?? ""}`}
-                  priority={variant === "emerald"}
-                />
+                {logoSrc.startsWith("data:") ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={logoSrc}
+                    alt={logoAlt ?? title}
+                    className={`h-full w-full object-contain drop-shadow-[0_8px_24px_rgba(23,37,84,0.15)] transition-all duration-300 group-hover:drop-shadow-[0_12px_28px_rgba(23,37,84,0.22)] ${logoImageClassName ?? ""}`}
+                  />
+                ) : (
+                  <Image
+                    src={logoSrc}
+                    alt={logoAlt ?? title}
+                    width={160}
+                    height={160}
+                    className={`h-full w-full object-contain drop-shadow-[0_8px_24px_rgba(23,37,84,0.15)] transition-all duration-300 group-hover:drop-shadow-[0_12px_28px_rgba(23,37,84,0.22)] ${logoImageClassName ?? ""}`}
+                    priority={variant === "emerald"}
+                  />
+                )}
               </div>
             </div>
           )}
@@ -308,6 +321,26 @@ export function ActionCard({
         </div>
     </>
   );
+
+  if (onLaunch) {
+    return (
+      <div className="h-full p-1">
+        <button
+          type="button"
+          {...linkProps}
+          disabled={launchDisabled}
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (!launchDisabled) onLaunch();
+          }}
+          className={`${linkClassName} w-full cursor-pointer border-0 bg-transparent p-0 text-left disabled:cursor-wait disabled:opacity-80`}
+        >
+          {cardContent}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full p-1">

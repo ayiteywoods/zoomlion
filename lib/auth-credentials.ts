@@ -37,18 +37,17 @@ export function saveAuthCredentials(
     sipEmail: sipEmail?.trim() || undefined,
   };
 
-  sessionStorage.setItem(AUTH_CREDENTIALS_KEY, JSON.stringify(payload));
-
-  console.info("[JGC Auth] Saved login credentials for system launch:", {
-    phone: payload.phone,
-    password: "[redacted]",
-  });
+  const serialized = JSON.stringify(payload);
+  sessionStorage.setItem(AUTH_CREDENTIALS_KEY, serialized);
+  localStorage.setItem(AUTH_CREDENTIALS_KEY, serialized);
 }
 
 export function getAuthCredentials(): StoredAuthCredentials | null {
   if (typeof window === "undefined") return null;
 
-  const raw = sessionStorage.getItem(AUTH_CREDENTIALS_KEY);
+  const raw =
+    localStorage.getItem(AUTH_CREDENTIALS_KEY) ??
+    sessionStorage.getItem(AUTH_CREDENTIALS_KEY);
   if (!raw) return null;
 
   try {
@@ -82,4 +81,5 @@ export function getAuthCredentials(): StoredAuthCredentials | null {
 export function clearAuthCredentials() {
   if (typeof window === "undefined") return;
   sessionStorage.removeItem(AUTH_CREDENTIALS_KEY);
+  localStorage.removeItem(AUTH_CREDENTIALS_KEY);
 }

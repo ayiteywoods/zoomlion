@@ -6,17 +6,18 @@ import { FlyingDashedLines } from "@/components/flying-dashed-lines";
 import { IndustrialRecyclingIcons } from "@/components/industrial-recycling-icons";
 import {
   DEFAULT_HERO_DESCRIPTION,
-  dashboardCards,
+  findDashboardCard,
   getHeroDescription,
   type DashboardCardId,
 } from "@/lib/dashboard-cards";
+import { isCustomCardId } from "@/lib/custom-systems";
 
-const accentByCard: Record<DashboardCardId, string> = {
+const accentByCard = {
   iwaste: "bg-emerald-500",
   corporate: "bg-violet-500",
   sip: "bg-amber-500",
   "add-company": "bg-rose-500",
-};
+} as const;
 
 type HeroSectionProps = {
   activeCardId: DashboardCardId | null;
@@ -49,11 +50,14 @@ export function HeroSection({
     return () => clearTimeout(timeout);
   }, [targetDescription, displayedDescription]);
 
-  const accentClass = activeCardId
-    ? accentByCard[activeCardId]
-    : "bg-primary";
+  const accentClass =
+    activeCardId && activeCardId in accentByCard
+      ? accentByCard[activeCardId as keyof typeof accentByCard]
+      : isCustomCardId(activeCardId ?? "")
+        ? "bg-sky-500"
+        : "bg-primary";
 
-  const activeCard = dashboardCards.find((card) => card.id === activeCardId);
+  const activeCard = activeCardId ? findDashboardCard(activeCardId) : undefined;
 
   return (
     <section className="relative shrink-0 overflow-hidden border-b border-line bg-surface-elevated">

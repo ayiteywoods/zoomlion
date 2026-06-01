@@ -43,18 +43,12 @@ export async function POST(request: Request) {
         return redirectAfterFormPost(corporateLoginUrl);
       }
 
-      return new NextResponse(
-        buildSystemSessionBootstrapHtml(
-          corporateLoginUrl,
-          corporateConfig.label
-        ),
+      return NextResponse.json(
         {
-          status: 200,
-          headers: {
-            "Content-Type": "text/html; charset=utf-8",
-            "Cache-Control": "no-store",
-          },
-        }
+          ok: false,
+          message: "Unable to sign in to Corporate with your hub credentials.",
+        },
+        { status: 401 }
       );
     }
 

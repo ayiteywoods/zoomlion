@@ -77,7 +77,11 @@ export default function SystemLaunchPage() {
 
   useEffect(() => {
     if (skipAutoLaunch) {
-      const timer = window.setTimeout(() => router.replace("/dashboard"), 5000);
+      // Opened in a new tab from a failed session POST — keep the error visible.
+      if (typeof window !== "undefined" && window.opener) {
+        return;
+      }
+      const timer = window.setTimeout(() => router.replace("/dashboard"), 8000);
       return () => window.clearTimeout(timer);
     }
 
@@ -96,10 +100,9 @@ export default function SystemLaunchPage() {
 
     let cancelled = false;
 
-    async function launchWithSessionForm(
+    function launchWithSessionForm(
       sessionPath: string,
       label: string,
-      target: "_blank" | "_self" = "_blank",
       corporateLoginId?: string,
       sipEmail?: string
     ) {
@@ -108,16 +111,10 @@ export default function SystemLaunchPage() {
         sessionPath,
         credentials!.phone,
         credentials!.password,
-        target,
+        "_self",
         corporateLoginId,
         sipEmail
       );
-
-      if (target === "_blank") {
-        window.setTimeout(() => {
-          router.replace("/dashboard");
-        }, 800);
-      }
     }
 
     async function launch() {
@@ -131,7 +128,6 @@ export default function SystemLaunchPage() {
           launchWithSessionForm(
             "/api/systems/corporate/session",
             "Corporate",
-            "_blank",
             credentials!.corporateLoginId
           );
           return;
@@ -149,7 +145,6 @@ export default function SystemLaunchPage() {
           launchWithSessionForm(
             "/api/systems/sip/session",
             "SIP",
-            "_blank",
             undefined,
             sipEmail
           );
@@ -183,10 +178,7 @@ export default function SystemLaunchPage() {
         }
 
         if (payload.launchMode === "gateway") {
-          window.open(payload.redirectUrl, "_blank", "noopener,noreferrer");
-          window.setTimeout(() => {
-            router.replace("/dashboard");
-          }, 600);
+          window.location.href = payload.redirectUrl;
           return;
         }
 
@@ -195,12 +187,8 @@ export default function SystemLaunchPage() {
           `/api/systems/autologin/${system}`,
           credentials!.phone,
           credentials!.password,
-          "_blank"
+          "_self"
         );
-
-        window.setTimeout(() => {
-          router.replace("/dashboard");
-        }, 800);
       } catch {
         if (!cancelled) {
           router.replace("/login");

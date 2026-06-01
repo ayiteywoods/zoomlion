@@ -1,4 +1,5 @@
 import type { DashboardCardId } from "@/lib/dashboard-cards";
+import { isCustomCardId, readCustomSystems } from "@/lib/custom-systems";
 
 export type UserRole =
   | "operations-manager"
@@ -28,9 +29,20 @@ const roleCardAccess: Record<UserRole, DashboardCardId[]> = {
 };
 
 export function getVisibleCardIds(role: UserRole): DashboardCardId[] {
-  return roleCardAccess[role];
+  const base = roleCardAccess[role];
+  if (!base.includes("add-company")) return base;
+
+  const customIds = readCustomSystems().map(
+    (system) => `custom-${system.id}` as DashboardCardId
+  );
+  const withoutAdd = base.filter((id) => id !== "add-company");
+
+  return [...withoutAdd, ...customIds, "add-company"];
 }
 
 export function canAccessCard(role: UserRole, cardId: DashboardCardId): boolean {
+  if (isCustomCardId(cardId)) {
+    return roleCardAccess[role].includes("add-company");
+  }
   return roleCardAccess[role].includes(cardId);
 }
