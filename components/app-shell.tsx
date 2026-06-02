@@ -10,7 +10,6 @@ import {
   HomeIcon,
   XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { CompanySwitcher } from "@/components/company-switcher";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { GlobalSearch, navSearchInputClass } from "@/components/global-search";
 import { ThemeModeToggle } from "@/components/theme-mode-toggle";
@@ -36,7 +35,7 @@ export function AppShell({ system, children }: AppShellProps) {
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-surface">
       <header className="relative z-30 shrink-0 border-b border-brand-800/60 bg-brand-950 px-4 py-3 lg:px-6">
-        <div className="flex items-center gap-3">
+        <div className="relative flex items-center gap-3">
           <button
             type="button"
             className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-white ring-1 ring-white/10 lg:hidden"
@@ -59,8 +58,7 @@ export function AppShell({ system, children }: AppShellProps) {
               {config.title}
             </span>
           </Link>
-          <CompanySwitcher compact />
-          <div className="relative z-50 hidden min-w-0 flex-1 md:block md:max-w-sm lg:max-w-md">
+          <div className="absolute left-1/2 z-50 hidden w-full max-w-sm -translate-x-1/2 md:block lg:max-w-md">
             <GlobalSearch className="w-full" inputClassName={navSearchInputClass} />
           </div>
           <div className="ml-auto flex items-center gap-2">

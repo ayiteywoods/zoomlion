@@ -13,6 +13,11 @@ export const metadata: Metadata = {
   title: "Zoomlion | Waste Management Experts",
   description:
     "iWaste Solutions Inc. — smart and sustainable waste management solutions.",
+  icons: {
+    icon: "/zl.png",
+    shortcut: "/zl.png",
+    apple: "/zl.png",
+  },
 };
 
 export default function RootLayout({

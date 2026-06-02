@@ -5,7 +5,6 @@ import Link from "next/link";
 // import { ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { GlobalSearch, navSearchInputClass } from "@/components/global-search";
-import { CompanySwitcher } from "@/components/company-switcher";
 import { ThemeModeToggle } from "@/components/theme-mode-toggle";
 
 export function SiteHeader() {
@@ -46,10 +45,8 @@ export function SiteHeader() {
           </div>
         </Link>
 
-        <CompanySwitcher />
-
         <div
-          className="animate-fade-in-up relative z-50 hidden min-w-0 max-w-md flex-1 md:block lg:max-w-xl"
+          className="animate-fade-in-up absolute left-1/2 z-50 hidden w-full max-w-md -translate-x-1/2 md:block lg:max-w-xl"
           style={{ animationDelay: "160ms" }}
         >
           <GlobalSearch className="w-full" inputClassName={navSearchInputClass} />

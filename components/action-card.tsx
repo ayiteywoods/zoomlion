@@ -30,7 +30,7 @@ const statusConfig: Record<
 type ActionCardVariant = "emerald" | "violet" | "amber" | "rose";
 
 const cardBase =
-  "border border-line bg-surface-elevated shadow-[0_1px_3px_rgba(23,37,84,0.06),0_4px_12px_rgba(23,37,84,0.04)] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_4px_20px_rgba(23,37,84,0.1)]";
+  "border border-line bg-white shadow-[0_1px_3px_rgba(23,37,84,0.06),0_4px_12px_rgba(23,37,84,0.04)] transition-all duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_4px_20px_rgba(23,37,84,0.1)] dark:bg-surface-elevated";
 
 const variantStyles: Record<
   ActionCardVariant,
