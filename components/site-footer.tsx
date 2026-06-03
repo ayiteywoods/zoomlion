@@ -34,9 +34,7 @@ export function SiteFooter() {
             |
           </span>
           <a
-            href="https://helpdesk.nerasolgh.com/tickets/create"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="mailto:support@zoomlion.com"
             className="animate-fade-in font-medium text-on-brand-muted transition-colors hover:text-on-brand [animation-delay:950ms]"
           >
             Support

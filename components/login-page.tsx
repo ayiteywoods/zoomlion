@@ -615,9 +615,14 @@ export function LoginPage() {
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 text-[11px] text-brand-300/70 sm:flex-row sm:text-xs">
           <p>© {new Date().getFullYear()} Zoomlion Waste Management</p>
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-            <Link href="#" className="transition-colors hover:text-brand-200">
+            <a
+              href="https://nerasolgh.com/index.php/privacy-policy/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors hover:text-brand-200"
+            >
               Privacy
-            </Link>
+            </a>
             <a
               href="https://helpdesk.nerasolgh.com/tickets/create"
               target="_blank"
