@@ -14,10 +14,22 @@ import {
 import { useDashboard } from "@/components/dashboard-provider";
 import { clearAuthentication } from "@/lib/auth";
 
-const menuItems = [
+type MenuItem = {
+  label: string;
+  href: string;
+  icon: typeof UserIcon;
+  external?: boolean;
+};
+
+const menuItems: MenuItem[] = [
   { label: "Profile", href: "/profile", icon: UserIcon },
-  { label: "Help & documentation", href: "#", icon: QuestionMarkCircleIcon },
-] as const;
+  {
+    label: "Support",
+    href: "https://helpdesk.nerasolgh.com/tickets/create",
+    icon: QuestionMarkCircleIcon,
+    external: true,
+  },
+];
 
 export function ProfileDropdown() {
   const router = useRouter();
@@ -90,18 +102,33 @@ export function ProfileDropdown() {
           </div>
 
           <div className="py-1">
-            {menuItems.map(({ label, href, icon: Icon }) => (
-              <Link
-                key={label}
-                href={href}
-                role="menuitem"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary-soft"
-              >
-                <Icon className="h-5 w-5 shrink-0" />
-                {label}
-              </Link>
-            ))}
+            {menuItems.map(({ label, href, icon: Icon, external }) =>
+              external ? (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary-soft"
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                  {label}
+                </a>
+              ) : (
+                <Link
+                  key={label}
+                  href={href}
+                  role="menuitem"
+                  onClick={() => setOpen(false)}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary-soft"
+                >
+                  <Icon className="h-5 w-5 shrink-0" />
+                  {label}
+                </Link>
+              )
+            )}
             <button
               type="button"
               role="menuitem"
