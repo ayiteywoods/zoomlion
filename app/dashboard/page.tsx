@@ -1,7 +1,6 @@
 import { SiteHeader } from "@/components/site-header";
 import { DashboardContent } from "@/components/dashboard-content";
 import { SiteFooter } from "@/components/site-footer";
-import { AnnouncementBar } from "@/components/announcement-bar";
 
 export default function DashboardPage() {
   return (
@@ -13,7 +12,6 @@ export default function DashboardPage() {
         Skip to main content
       </a>
       <SiteHeader />
-      <AnnouncementBar />
       <main
         id="main-content"
         className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-surface"

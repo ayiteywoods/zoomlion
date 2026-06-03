@@ -27,14 +27,6 @@ export const defaultUser = {
   sessionExpiresIn: "Unknown",
 };
 
-export const dashboardAnnouncement = {
-  id: "medical-pickup-q2",
-  message:
-    "3 medical waste pickups are overdue across Accra sites. Review schedules in Medical Waste.",
-  href: "/medical/schedules",
-  linkLabel: "View schedules",
-};
-
 export type SystemHealthItem = {
   id: DashboardCardId | "platform";
   label: string;
