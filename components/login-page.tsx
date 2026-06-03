@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, type ComponentType, type FormEvent, type KeyboardEventHandler, type ReactNode } from "react";
+import { useEffect, useState, type ComponentType, type FormEvent, type KeyboardEventHandler, type ReactNode } from "react";
 import {
   ArrowPathIcon,
   ArrowRightOnRectangleIcon,
@@ -23,8 +23,9 @@ import {
   type LoginSuccessResponse,
 } from "@/lib/auth-api";
 import { resolvePostLoginPath } from "@/lib/auth-redirect";
-import { setAuthenticated } from "@/lib/auth";
+import { setAuthenticated, clearAuthentication } from "@/lib/auth";
 import { saveAuthCredentials } from "@/lib/auth-credentials";
+import { saveResetPhone, markFirstLoginReset, clearResetSession } from "@/lib/reset-password-session";
 
 const LOGIN_BG_CYCLE_S = 24;
 const LOGIN_BG_SLOTS = 8;
@@ -344,6 +345,13 @@ export function LoginPage() {
 
   const redirectTo = resolvePostLoginPath(searchParams.get("from"));
 
+  useEffect(() => {
+    clearResetSession();
+    if (searchParams.get("cancelReset") === "1") {
+      clearAuthentication();
+    }
+  }, [searchParams]);
+
   async function handleLoginSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (isLoggingIn) return;
@@ -384,8 +392,28 @@ export function LoginPage() {
         return;
       }
 
-      const loginResponse = payload as LoginSuccessResponse;
+      const loginResponse = payload as LoginSuccessResponse & {
+        requiresFirstTimeSetup?: boolean;
+        phone_no?: string;
+        message?: string;
+      };
+
       const user = extractAuthUser(loginResponse);
+
+      if (loginResponse.requiresFirstTimeSetup) {
+        const resetPhone =
+          loginResponse.phone_no?.trim() ||
+          user?.phone_no?.trim() ||
+          identifier;
+        clearAuthentication();
+        saveResetPhone(resetPhone);
+        markFirstLoginReset();
+        router.push(
+          `/reset-password?phone=${encodeURIComponent(resetPhone)}&firstLogin=1`
+        );
+        return;
+      }
+
       setAuthenticated(true, loginResponse);
       const profileEmail =
         user?.email?.trim() ||
@@ -522,7 +550,7 @@ export function LoginPage() {
                     }}
                     labelAction={
                       <Link
-                        href="/reset-password"
+                        href="/reset-password?flow=forgot"
                         className="text-xs font-medium text-brand-700 hover:text-brand-800 dark:text-brand-400 dark:hover:text-brand-300"
                       >
                         Forgot password?

@@ -205,9 +205,18 @@ export function getAuthCompanyName(user: AuthUser | null): string | null {
   return null;
 }
 
+export const PENDING_PASSWORD_RESET_COOKIE = "zl-pending-password-reset";
+export const PENDING_RESET_TOKEN_COOKIE = "zl-pending-reset-token";
+export const PENDING_RESET_FLOW_COOKIE = "zl-pending-reset-flow";
+/** Set after hub password reset completes; iWaste flags may stay stale. */
+export const HUB_PASSWORD_SETUP_COOKIE = "zl-hub-password-setup";
+
 /** Cookie flags for clearing auth in middleware responses */
 export const AUTH_CLEAR_COOKIES = [
   AUTH_COOKIE,
   AUTH_LAST_ACTIVITY_COOKIE,
   AUTH_REMEMBER_COOKIE,
+  PENDING_PASSWORD_RESET_COOKIE,
+  PENDING_RESET_TOKEN_COOKIE,
+  PENDING_RESET_FLOW_COOKIE,
 ] as const;

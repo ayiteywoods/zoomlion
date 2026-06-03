@@ -57,6 +57,10 @@ export type AuthUser = {
   role?: string;
   company?: string;
   company_name?: string;
+  /** iWaste: "N" = must reset password, "Y" = already reset */
+  password_reset?: string;
+  /** iWaste: "N" = first-time consolidated sign-in, "Y" = already set up */
+  is_sso?: string;
   [key: string]: unknown;
 };
 
@@ -95,6 +99,7 @@ function isUserLike(value: unknown): value is Record<string, unknown> {
   return (
     "name" in record ||
     "phone_no" in record ||
+    "phone" in record ||
     "username" in record ||
     "id" in record ||
     "user_id" in record

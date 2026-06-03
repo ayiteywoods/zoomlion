@@ -5,6 +5,9 @@ import {
   AUTH_CLEAR_COOKIES,
   AUTH_COOKIE,
   AUTH_LAST_ACTIVITY_COOKIE,
+  PENDING_PASSWORD_RESET_COOKIE,
+  PENDING_RESET_FLOW_COOKIE,
+  PENDING_RESET_TOKEN_COOKIE,
   isAuthIdleExpired,
   parseLastActivity,
 } from "@/lib/auth";
@@ -61,6 +64,52 @@ function isSessionActive(request: NextRequest): boolean {
   return true;
 }
 
+function clearPendingResetCookies(response: NextResponse) {
+  for (const name of [
+    PENDING_PASSWORD_RESET_COOKIE,
+    PENDING_RESET_FLOW_COOKIE,
+    PENDING_RESET_TOKEN_COOKIE,
+  ] as const) {
+    response.cookies.set(name, "", {
+      httpOnly: true,
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+    });
+  }
+}
+
+function wantsCancelReset(request: NextRequest): boolean {
+  return request.nextUrl.searchParams.get("cancelReset") === "1";
+}
+
+function clearSipBrowsingCookies(response: NextResponse) {
+  response.cookies.set(SIP_BROWSING_COOKIE, "", { path: "/", maxAge: 0 });
+  response.cookies.set(SIP_SESSION_COOKIE, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    path: "/",
+    maxAge: 0,
+  });
+}
+
+function getPendingResetRedirectUrl(request: NextRequest): URL | null {
+  const pendingResetPhone = request.cookies.get(
+    PENDING_PASSWORD_RESET_COOKIE
+  )?.value;
+  if (!pendingResetPhone) return null;
+
+  const resetUrl = new URL("/reset-password", request.url);
+  resetUrl.searchParams.set("phone", pendingResetPhone);
+  const pendingFlow = request.cookies.get(PENDING_RESET_FLOW_COOKIE)?.value;
+  if (pendingFlow === "forgot-password") {
+    resetUrl.searchParams.set("flow", "forgot");
+  } else {
+    resetUrl.searchParams.set("firstLogin", "1");
+  }
+  return resetUrl;
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAuthenticated = isSessionActive(request);
@@ -75,6 +124,10 @@ export function middleware(request: NextRequest) {
   }
 
   if (pathname === "/") {
+    const pendingResetUrl = getPendingResetRedirectUrl(request);
+    if (pendingResetUrl) {
+      return NextResponse.redirect(pendingResetUrl);
+    }
     const response = NextResponse.redirect(
       new URL(isAuthenticated ? "/dashboard" : "/login", request.url)
     );
@@ -105,25 +158,37 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
-  if (pathname === "/login" && !isSipGatewayReferer(request.headers.get("referer"), request.url)) {
+  if (pathname === "/login") {
+    if (wantsCancelReset(request)) {
+      const response = NextResponse.next();
+      clearAuthCookies(response);
+      return response;
+    }
+
+    const hadPendingReset = Boolean(getPendingResetRedirectUrl(request));
     const response = NextResponse.next();
-    response.cookies.set(SIP_BROWSING_COOKIE, "", { path: "/", maxAge: 0 });
-    response.cookies.set(SIP_SESSION_COOKIE, "", {
-      httpOnly: true,
-      sameSite: "lax",
-      path: "/",
-      maxAge: 0,
-    });
-    if (isAuthenticated) {
+    if (!isSipGatewayReferer(request.headers.get("referer"), request.url)) {
+      clearSipBrowsingCookies(response);
+    }
+    clearPendingResetCookies(response);
+
+    if (isAuthenticated && !hadPendingReset) {
       const target = resolvePostLoginPath(request.nextUrl.searchParams.get("from"));
       return NextResponse.redirect(new URL(target, request.url));
     }
+
     return response;
   }
 
-  if (isAuthenticated && pathname === "/login") {
-    const target = resolvePostLoginPath(request.nextUrl.searchParams.get("from"));
-    return NextResponse.redirect(new URL(target, request.url));
+  const pendingResetUrl = getPendingResetRedirectUrl(request);
+
+  if (
+    pendingResetUrl &&
+    !pathname.startsWith("/reset-password") &&
+    !pathname.startsWith("/api/auth/reset") &&
+    pathname !== "/login"
+  ) {
+    return NextResponse.redirect(pendingResetUrl);
   }
 
   if (!isAuthenticated && !isPublicPath(pathname)) {
