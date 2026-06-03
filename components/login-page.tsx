@@ -618,9 +618,14 @@ export function LoginPage() {
             <Link href="#" className="transition-colors hover:text-brand-200">
               Privacy
             </Link>
-            <Link href="#" className="transition-colors hover:text-brand-200">
+            <a
+              href="https://helpdesk.nerasolgh.com/tickets/create"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors hover:text-brand-200"
+            >
               Support
-            </Link>
+            </a>
             <span className="hidden text-brand-500/40 sm:inline" aria-hidden>
               |
             </span>
