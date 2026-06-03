@@ -15,12 +15,14 @@ export function SiteFooter() {
           © 2026 Zoomlion Waste Management. All rights reserved.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
-          <Link
-            href="/privacy"
+          <a
+            href="https://nerasolgh.com/index.php/privacy-policy/"
+            target="_blank"
+            rel="noopener noreferrer"
             className="animate-fade-in font-medium text-on-brand-muted transition-colors hover:text-on-brand [animation-delay:900ms]"
           >
             Privacy Policy
-          </Link>
+          </a>
           <span className="text-white/30" aria-hidden>
             |
           </span>
@@ -34,7 +36,9 @@ export function SiteFooter() {
             |
           </span>
           <a
-            href="mailto:support@zoomlion.com"
+            href="https://helpdesk.nerasolgh.com/tickets/create"
+            target="_blank"
+            rel="noopener noreferrer"
             className="animate-fade-in font-medium text-on-brand-muted transition-colors hover:text-on-brand [animation-delay:950ms]"
           >
             Support
