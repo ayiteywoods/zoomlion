@@ -113,15 +113,9 @@ export async function POST(request: Request) {
       );
 
       if (!consolidated.ok) {
-        const status =
-          consolidated.accountNotFound ? 404 : consolidated.status || 401;
         return NextResponse.json(
-          {
-            message: consolidated.accountNotFound
-              ? ACCOUNT_NOT_FOUND_MESSAGE
-              : consolidated.message,
-          },
-          { status }
+          { message: ACCOUNT_NOT_FOUND_MESSAGE },
+          { status: 404 }
         );
       }
 

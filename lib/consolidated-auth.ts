@@ -10,7 +10,7 @@ import {
 
 export const AUTH_CONSOLIDATED_PATHS = ["/auth/user", "/auth/"] as const;
 export const ACCOUNT_NOT_FOUND_MESSAGE =
-  "Your Consolidated Account does not exist, contact System Admin";
+  "This Consolidated Account does not exist, Please contact System Administrator";
 
 const PASSWORD_RESET_MESSAGE_HINTS = [
   "change your password",
@@ -316,14 +316,11 @@ export async function loginConsolidatedAuth(
           continue;
         }
 
-        const accountNotFound = isConsolidatedAccountNotFound(status, payload);
         lastFailure = {
           ok: false,
-          status: accountNotFound ? 404 : status,
-          accountNotFound,
-          message: accountNotFound
-            ? ACCOUNT_NOT_FOUND_MESSAGE
-            : getLoginErrorMessage(payload),
+          status: 404,
+          accountNotFound: true,
+          message: ACCOUNT_NOT_FOUND_MESSAGE,
         };
         continue;
       }
