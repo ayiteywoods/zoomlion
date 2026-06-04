@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   clearAuthentication,
   getLastActivityMs,
+  hasAuthCookie,
   isAuthIdleExpired,
   isAuthenticatedClient,
   touchAuthActivity,
@@ -28,6 +29,13 @@ export function AuthActivityTracker() {
 
   useEffect(() => {
     if (pathname === "/login" || pathname.startsWith("/reset-password")) {
+      return;
+    }
+
+    if (!isAuthenticatedClient() && !hasAuthCookie()) {
+      router.replace(
+        `/login?from=${encodeURIComponent(pathname === "/dashboard" ? "/dashboard" : pathname)}`
+      );
       return;
     }
 

@@ -9,7 +9,7 @@ export const AUTH_RESET_VERIFY_PATHS = [
   "/auth/verify",
   "/auth/otp/verify",
 ] as const;
-export const AGENT_PASSWORD_PATH = "/agent/password";
+export const AUTH_REFRESH_PATH = "/auth/refresh";
 
 function normalizePhoneDigits(phone: string): string {
   return phone.replace(/\D/g, "").replace(/^233/, "").replace(/^0/, "");
@@ -60,8 +60,8 @@ function getSipResetPasswordUrl(): string {
   return `${base.replace(/\/$/, "")}/reset/password`;
 }
 
-function getAgentPasswordUrl(): string {
-  return `${getAuthApiBaseUrl()}${AGENT_PASSWORD_PATH}`;
+function getAuthRefreshUrl(): string {
+  return `${getAuthApiBaseUrl()}${AUTH_REFRESH_PATH}`;
 }
 
 async function postJson(
@@ -264,19 +264,10 @@ async function resetIwastePassword(
   password: string,
   token?: string
 ): Promise<ApiResult> {
-  if (!token?.trim()) {
-    return {
-      ok: false,
-      status: 401,
-      message:
-        "Your iWaste session expired. Sign in again and retry password setup.",
-    };
-  }
-
   try {
     const attempts = [
-      () => postForm(getAgentPasswordUrl(), { phone_no: phoneNo, password }, token),
-      () => postJson(getAgentPasswordUrl(), { phone_no: phoneNo, password }, token),
+      () => postForm(getAuthRefreshUrl(), { phone_no: phoneNo, password }, token),
+      () => postJson(getAuthRefreshUrl(), { phone_no: phoneNo, password }, token),
     ];
 
     for (const attempt of attempts) {

@@ -16,21 +16,14 @@ import {
   type AuthUser,
 } from "@/lib/auth-api";
 import {
-  AUTH_COOKIE,
   getAuthToken,
   getAuthUser,
   getDisplayName,
+  hasAuthCookie,
   isAuthenticatedClient,
   persistAuthUser,
   touchAuthActivity,
 } from "@/lib/auth";
-
-function hasAuthCookie(): boolean {
-  if (typeof document === "undefined") return false;
-  return document.cookie
-    .split(";")
-    .some((part) => part.trim().startsWith(`${AUTH_COOKIE}=1`));
-}
 
 const PROFILE_FIELD_ORDER: { key: keyof AuthUser | string; label: string }[] =
   [

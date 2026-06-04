@@ -5,11 +5,11 @@ import {
   AUTH_CLEAR_COOKIES,
   AUTH_COOKIE,
   AUTH_LAST_ACTIVITY_COOKIE,
+  HUB_SESSION_COOKIE,
   PENDING_PASSWORD_RESET_COOKIE,
   PENDING_RESET_FLOW_COOKIE,
   PENDING_RESET_TOKEN_COOKIE,
-  isAuthIdleExpired,
-  parseLastActivity,
+  isHubSessionActive,
 } from "@/lib/auth";
 import { shouldRedirectHubPathToCorporateGateway } from "@/lib/corporate-gateway-middleware";
 import {
@@ -52,16 +52,11 @@ function clearAuthCookies(response: NextResponse) {
 }
 
 function isSessionActive(request: NextRequest): boolean {
-  const hasAuth = request.cookies.get(AUTH_COOKIE)?.value === "1";
-  if (!hasAuth) return false;
-
-  const lastActivity = parseLastActivity(
-    request.cookies.get(AUTH_LAST_ACTIVITY_COOKIE)?.value
+  return isHubSessionActive(
+    request.cookies.get(AUTH_COOKIE)?.value,
+    request.cookies.get(AUTH_LAST_ACTIVITY_COOKIE)?.value,
+    request.cookies.get(HUB_SESSION_COOKIE)?.value
   );
-
-  if (isAuthIdleExpired(lastActivity)) return false;
-
-  return true;
 }
 
 function clearPendingResetCookies(response: NextResponse) {

@@ -22,6 +22,8 @@ export const AUTH_LAST_ACTIVITY_COOKIE = "zl-auth-at";
 export const AUTH_LAST_LOGIN_KEY = "zl-auth-last-login";
 export const AUTH_REMEMBER_KEY = "zl-auth-remember";
 export const AUTH_REMEMBER_COOKIE = "zl-auth-remember";
+/** Set only after a successful hub login (server or client). */
+export const HUB_SESSION_COOKIE = "zl-hub-session";
 
 /** Session expires after 6 hours without user activity */
 export const AUTH_IDLE_MS = 6 * 60 * 60 * 1000;
@@ -55,8 +57,41 @@ export function parseLastActivity(value: string | undefined | null): number {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+/** Shared session check for middleware and server components. */
+export function isHubSessionActive(
+  authCookie: string | undefined | null,
+  activityCookie: string | undefined | null,
+  hubSessionCookie: string | undefined | null
+): boolean {
+  if (hubSessionCookie !== "1") return false;
+  if (authCookie !== "1") return false;
+  const lastActivity = parseLastActivity(activityCookie);
+  return !isAuthIdleExpired(lastActivity);
+}
+
+export function hasAuthCookie(): boolean {
+  if (typeof document === "undefined") return false;
+  const parts = document.cookie.split(";").map((part) => part.trim());
+  const hasAuth = parts.some((part) => part.startsWith(`${AUTH_COOKIE}=1`));
+  const hasHubSession = parts.some((part) =>
+    part.startsWith(`${HUB_SESSION_COOKIE}=1`)
+  );
+  return hasAuth && hasHubSession;
+}
+
+/** Remove auth cookies left behind without a completed login. */
+export function clearOrphanAuthCookies() {
+  if (typeof window === "undefined") return;
+  if (localStorage.getItem(AUTH_STORAGE_KEY) === "true") return;
+  clearClientCookie(AUTH_COOKIE);
+  clearClientCookie(AUTH_LAST_ACTIVITY_COOKIE);
+  clearClientCookie(HUB_SESSION_COOKIE);
+  clearClientCookie(AUTH_REMEMBER_COOKIE);
+}
+
 export function touchAuthActivity(remember?: boolean) {
   if (typeof window === "undefined") return;
+  if (localStorage.getItem(AUTH_STORAGE_KEY) !== "true") return;
 
   const rememberMe =
     remember !== undefined
@@ -72,6 +107,7 @@ export function touchAuthActivity(remember?: boolean) {
 
   writeClientCookie(AUTH_LAST_ACTIVITY_COOKIE, now, rememberMe);
   writeClientCookie(AUTH_COOKIE, "1", rememberMe);
+  writeClientCookie(HUB_SESSION_COOKIE, "1", rememberMe);
 
   if (rememberMe) {
     writeClientCookie(AUTH_REMEMBER_COOKIE, "1", true);
@@ -176,6 +212,7 @@ export function clearAuthentication() {
 
   clearClientCookie(AUTH_COOKIE);
   clearClientCookie(AUTH_LAST_ACTIVITY_COOKIE);
+  clearClientCookie(HUB_SESSION_COOKIE);
   clearClientCookie(AUTH_REMEMBER_COOKIE);
   clearAuthCredentials();
 }
@@ -211,11 +248,40 @@ export const PENDING_RESET_FLOW_COOKIE = "zl-pending-reset-flow";
 /** Set after hub password reset completes; iWaste flags may stay stale. */
 export const HUB_PASSWORD_SETUP_COOKIE = "zl-hub-password-setup";
 
+export function attachHubSessionCookies(response: {
+  cookies: {
+    set: (
+      name: string,
+      value: string,
+      options?: { path?: string; sameSite?: "lax"; maxAge?: number }
+    ) => void;
+  };
+}) {
+  const now = String(Date.now());
+  const maxAge = REMEMBER_COOKIE_MAX_AGE;
+  response.cookies.set(AUTH_COOKIE, "1", {
+    path: "/",
+    sameSite: "lax",
+    maxAge,
+  });
+  response.cookies.set(AUTH_LAST_ACTIVITY_COOKIE, now, {
+    path: "/",
+    sameSite: "lax",
+    maxAge,
+  });
+  response.cookies.set(HUB_SESSION_COOKIE, "1", {
+    path: "/",
+    sameSite: "lax",
+    maxAge,
+  });
+}
+
 /** Cookie flags for clearing auth in middleware responses */
 export const AUTH_CLEAR_COOKIES = [
   AUTH_COOKIE,
   AUTH_LAST_ACTIVITY_COOKIE,
   AUTH_REMEMBER_COOKIE,
+  HUB_SESSION_COOKIE,
   PENDING_PASSWORD_RESET_COOKIE,
   PENDING_RESET_TOKEN_COOKIE,
   PENDING_RESET_FLOW_COOKIE,

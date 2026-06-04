@@ -11,6 +11,7 @@ import {
   loginConsolidatedAuth,
 } from "@/lib/consolidated-auth";
 import {
+  attachHubSessionCookies,
   HUB_PASSWORD_SETUP_COOKIE,
   PENDING_PASSWORD_RESET_COOKIE,
   PENDING_RESET_FLOW_COOKIE,
@@ -139,6 +140,7 @@ export async function POST(request: Request) {
 
       const response = NextResponse.json(consolidated.data);
       clearPendingResetCookies(response);
+      attachHubSessionCookies(response);
       response.cookies.set(HUB_PASSWORD_SETUP_COOKIE, consolidated.phoneNo, {
         httpOnly: true,
         sameSite: "lax",
@@ -155,7 +157,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: result.message }, { status });
     }
 
-    return NextResponse.json(result.data);
+    const response = NextResponse.json(result.data);
+    attachHubSessionCookies(response);
+    return response;
   } catch {
     return NextResponse.json(
       { message: getLoginErrorMessage(null) },
