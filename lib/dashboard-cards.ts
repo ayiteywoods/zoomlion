@@ -40,22 +40,22 @@ export const dashboardCards: DashboardCard[] = [
   },
   {
     id: "corporate",
-    title: "PSL Corporate",
+    title: "Corporate Business System",
     cardDescription:
       "Company-wide policies, reporting, and compliance documents.",
     heroDescription:
-      "Open Corporate resources for company-wide policies, reporting, compliance documents, and administrative waste management tools.",
+      "Delivering end-to-end environmental solutions tailored to the needs of corporate organisations, institutions, and industries that demand reliability, compliance, and a cleaner operational footprint.",
     variant: "violet",
     logoSrc: "/zl.png",
     logoAlt: "Zoomlion logo",
   },
   {
     id: "sip",
-    title: "SIP",
+    title: "SIP System",
     cardDescription:
       "Integrated waste management, scheduling, and compliance workflows.",
     heroDescription:
-      "Open SIP to manage integrated waste operations, scheduling, client records, and compliance workflows across your service areas.",
+      "Transforming local environments into cleaner, healthier, and more sustainable communities by collaborating with local authorities.",
     variant: "amber",
     logoSrc: "/zl.png",
     logoAlt: "Zoomlion logo",

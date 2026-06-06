@@ -298,7 +298,7 @@ export function ActionCard({
           className={`relative my-2 h-0.5 w-8 origin-center rounded-full transition-all duration-300 group-hover:w-10 ${styles.accent}`}
         />
         <p
-          className={`relative line-clamp-3 max-w-[18rem] text-[11px] leading-4 sm:text-xs sm:leading-5 ${styles.description}`}
+          className={`relative mx-auto line-clamp-3 max-w-[18rem] text-center text-[11px] leading-4 sm:text-xs sm:leading-5 ${styles.description}`}
         >
           {description}
         </p>
