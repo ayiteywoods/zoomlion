@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Zoomlion | Waste Management Experts",
+  title: "Zoomlion Ghana Limited",
   description:
     "iWaste Solutions Inc. — smart and sustainable waste management solutions.",
 };
