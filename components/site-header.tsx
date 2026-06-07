@@ -31,7 +31,7 @@ export function SiteHeader() {
           <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-white/10 p-1.5 ring-1 ring-white/10">
             <Image
               src="/zl.png"
-              alt="Zoomlion"
+              alt="ZoomLion Ghana Ltd"
               width={40}
               height={40}
               className="h-full w-full object-contain"
@@ -40,7 +40,7 @@ export function SiteHeader() {
           </div>
           <div className="hidden sm:block">
             <p className="text-base font-semibold leading-tight text-white">
-              Zoomlion
+              ZoomLion Ghana Ltd
             </p>
           </div>
         </Link>
