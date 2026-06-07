@@ -1,7 +1,4 @@
-import {
-  CORPORATE_BROWSING_COOKIE,
-  CORPORATE_SESSION_COOKIE,
-} from "@/lib/system-session-constants";
+import { CORPORATE_SESSION_COOKIE } from "@/lib/system-session-constants";
 
 export const CORPORATE_GATEWAY_PATH = "/systems/gateway/corporate";
 
@@ -63,11 +60,5 @@ export function shouldRedirectHubPathToCorporateGateway(
   if (!request.cookies.get(CORPORATE_SESSION_COOKIE)?.value) return false;
 
   const referer = request.headers.get("referer");
-  if (isCorporateGatewayReferer(referer, request.url)) return true;
-
-  const browsingCorporate =
-    request.cookies.get(CORPORATE_BROWSING_COOKIE)?.value === "1";
-  if (browsingCorporate && !isHubAppReferer(referer, request.url)) return true;
-
-  return false;
+  return isCorporateGatewayReferer(referer, request.url);
 }

@@ -245,7 +245,7 @@ async function postConsolidatedAuth(
 
 export type LoginResetRedirect = "none" | "first-time";
 
-async function resolveLoginResetRedirect(
+export async function resolveLoginResetRedirect(
   data: LoginSuccessResponse,
   options?: { hubSetupComplete?: boolean }
 ): Promise<LoginResetRedirect> {

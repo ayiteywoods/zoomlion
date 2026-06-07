@@ -2,6 +2,13 @@ const DEFAULT_IWASTE_API_BASE = "https://iwaste.adudor.com/api";
 const DEFAULT_CORPORATE_ORIGIN = "https://corporate.adudor.com";
 const DEFAULT_CORPORATE_LOGIN_URL = `${DEFAULT_CORPORATE_ORIGIN}/api/login`;
 import { loginSipWebSession } from "@/lib/sip-web-auth";
+import {
+  buildHubLoginFailure,
+  type HubSystemId,
+  type LoginErrorCode,
+  type SystemLoginAttempt,
+  toSystemLoginAttempt,
+} from "@/lib/login-error-messages";
 
 const DEFAULT_SIP_API_BASE = "http://sip.nerasolgh.com:8085/iwmis-pcm/api";
 
@@ -81,6 +88,21 @@ export type LoginSuccessResponse = {
 export type LoginResult =
   | { ok: true; data: LoginSuccessResponse }
   | { ok: false; message: string; status: number };
+
+export type HubLoginDetailedResult =
+  | {
+      ok: true;
+      data: LoginSuccessResponse;
+      system: HubSystemId;
+      attempts: SystemLoginAttempt[];
+    }
+  | {
+      ok: false;
+      message: string;
+      status: number;
+      code: LoginErrorCode;
+      attempts: SystemLoginAttempt[];
+    };
 
 function pickString(
   obj: Record<string, unknown>,
@@ -503,64 +525,97 @@ function hubLoginFailureStatus(upstreamStatus: number): number {
   return upstreamStatus;
 }
 
-function aggregateHubLoginFailure(
-  attempts: LoginResult[],
-  fallbackMessage: string
-): LoginResult {
-  const failures = attempts.filter((result) => !result.ok);
+/**
+ * Hub login with per-system attempts and classified error messages.
+ * Phone → iWaste, Corporate. Email → SIP, Corporate, iWaste.
+ */
+export async function loginWithCredentialsDetailed(
+  identifier: string,
+  password: string
+): Promise<HubLoginDetailedResult> {
+  const trimmed = identifier.trim();
+  const attempts: SystemLoginAttempt[] = [];
+  const isEmail = isEmailIdentifier(trimmed);
 
-  if (failures.every((result) => result.status === 0)) {
-    return {
-      ok: false,
-      status: 0,
-      message: "Network error. Please check your connection and try again.",
-    };
+  async function tryLogin(
+    system: HubSystemId,
+    loginFn: () => Promise<LoginResult>
+  ): Promise<LoginSuccessResponse | null> {
+    const result = await loginFn();
+    attempts.push(toSystemLoginAttempt(system, result));
+    return result.ok ? result.data : null;
   }
 
-  const preferred =
-    failures.find((result) => result.status === 401) ??
-    failures.find((result) => result.status === 404) ??
-    failures.find((result) => result.status === 422) ??
-    failures[0];
+  if (isEmail) {
+    const sip = await tryLogin("sip", () =>
+      loginSipWithCredentials(trimmed, password)
+    );
+    if (sip) {
+      return { ok: true, data: sip, system: "sip", attempts };
+    }
 
+    const corporate = await tryLogin("corporate", () =>
+      loginCorporateWithCredentials(trimmed, password)
+    );
+    if (corporate) {
+      return { ok: true, data: corporate, system: "corporate", attempts };
+    }
+
+    const iwaste = await tryLogin("iwaste", () =>
+      loginIwasteWithCredentials(trimmed, password)
+    );
+    if (iwaste) {
+      return { ok: true, data: iwaste, system: "iwaste", attempts };
+    }
+  } else {
+    const iwaste = await tryLogin("iwaste", () =>
+      loginIwasteWithCredentials(trimmed, password)
+    );
+    if (iwaste) {
+      return { ok: true, data: iwaste, system: "iwaste", attempts };
+    }
+
+    const corporate = await tryLogin("corporate", () =>
+      loginCorporateWithCredentials(trimmed, password)
+    );
+    if (corporate) {
+      return { ok: true, data: corporate, system: "corporate", attempts };
+    }
+
+    attempts.push({
+      system: "sip",
+      ok: false,
+      status: 0,
+      message: "SIP sign-in requires an email address.",
+      reason: "skipped",
+    });
+  }
+
+  const failure = buildHubLoginFailure(attempts);
   return {
     ok: false,
-    status: hubLoginFailureStatus(preferred?.status ?? 401),
-    message: preferred?.message || fallbackMessage,
+    message: failure.message,
+    status: hubLoginFailureStatus(failure.status),
+    code: failure.code,
+    attempts,
   };
 }
 
 /**
- * Hub login: phone → iWaste, then Corporate. Email → SIP, then Corporate (skip iWaste).
+ * Hub login: phone → iWaste, then Corporate. Email → SIP, then Corporate, then iWaste.
  */
 export async function loginWithCredentials(
   identifier: string,
   password: string
 ): Promise<LoginResult> {
-  const trimmed = identifier.trim();
-
-  if (isEmailIdentifier(trimmed)) {
-    const sipResult = await loginSipWithCredentials(trimmed, password);
-    if (sipResult.ok) return sipResult;
-
-    const corporateResult = await loginCorporateWithCredentials(trimmed, password);
-    if (corporateResult.ok) return corporateResult;
-
-    return aggregateHubLoginFailure(
-      [sipResult, corporateResult],
-      sipResult.message ||
-        "Unable to sign in. Use your SIP email and password, or sign in with phone for iWaste/Corporate."
-    );
+  const result = await loginWithCredentialsDetailed(identifier, password);
+  if (result.ok) {
+    return { ok: true, data: result.data };
   }
 
-  const iwasteResult = await loginIwasteWithCredentials(trimmed, password);
-  if (iwasteResult.ok) return iwasteResult;
-
-  const corporateResult = await loginCorporateWithCredentials(trimmed, password);
-  if (corporateResult.ok) return corporateResult;
-
-  return aggregateHubLoginFailure(
-    [iwasteResult, corporateResult],
-    "Unable to sign in. Check your phone number and password."
-  );
+  return {
+    ok: false,
+    status: result.status,
+    message: result.message,
+  };
 }

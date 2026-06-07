@@ -2,14 +2,12 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import {
   extractAuthToken,
+  extractAuthUser,
   getLoginErrorMessage,
   isEmailIdentifier,
-  loginWithCredentials,
+  loginWithCredentialsDetailed,
 } from "@/lib/auth-api";
-import {
-  ACCOUNT_NOT_FOUND_MESSAGE,
-  loginConsolidatedAuth,
-} from "@/lib/consolidated-auth";
+import { resolveLoginResetRedirect } from "@/lib/consolidated-auth";
 import {
   attachHubSessionCookies,
   HUB_PASSWORD_SETUP_COOKIE,
@@ -17,6 +15,7 @@ import {
   PENDING_RESET_FLOW_COOKIE,
   PENDING_RESET_TOKEN_COOKIE,
 } from "@/lib/auth";
+import { formatAttemptSummary } from "@/lib/login-error-messages";
 import { phonesMatch } from "@/lib/password-reset-api";
 
 function clearPendingResetCookies(response: NextResponse) {
@@ -103,61 +102,65 @@ export async function POST(request: Request) {
         ? phonesMatch(hubSetupPhone, trimmedIdentifier)
         : false);
 
-    if (!isEmailIdentifier(trimmedIdentifier)) {
-      const consolidated = await loginConsolidatedAuth(
-        trimmedIdentifier,
-        password,
+    const result = await loginWithCredentialsDetailed(
+      trimmedIdentifier,
+      password
+    );
+
+    if (!result.ok) {
+      return NextResponse.json(
         {
-          skipResetRedirect: hubSetupComplete,
-          hubSetupComplete,
-        }
+          message: result.message,
+          code: result.code,
+          systems: formatAttemptSummary(result.attempts),
+        },
+        { status: result.status || 401 }
       );
+    }
 
-      if (!consolidated.ok) {
-        return NextResponse.json(
-          { message: ACCOUNT_NOT_FOUND_MESSAGE },
-          { status: 404 }
-        );
-      }
+    const user = extractAuthUser(result.data);
+    const resolvedPhone =
+      user?.phone_no?.trim() ||
+      (!isEmailIdentifier(trimmedIdentifier) ? trimmedIdentifier : "");
 
-      const resetToken = extractAuthToken(consolidated.data);
+    if (!isEmailIdentifier(trimmedIdentifier)) {
+      const resetRedirect = hubSetupComplete
+        ? ("none" as const)
+        : await resolveLoginResetRedirect(result.data, { hubSetupComplete });
+      const resetToken = extractAuthToken(result.data);
 
-      if (consolidated.resetRedirect === "first-time") {
+      if (resetRedirect === "first-time") {
         const response = NextResponse.json({
           requiresFirstTimeSetup: true,
-          phone_no: consolidated.phoneNo,
+          phone_no: resolvedPhone,
           message:
             "Welcome. Please set a new password to activate your consolidated account.",
         });
         setPendingResetCookies(
           response,
-          consolidated.phoneNo,
+          resolvedPhone,
           "first-time",
           resetToken
         );
         return response;
       }
 
-      const response = NextResponse.json(consolidated.data);
+      const response = NextResponse.json(result.data);
       clearPendingResetCookies(response);
       attachHubSessionCookies(response);
-      response.cookies.set(HUB_PASSWORD_SETUP_COOKIE, consolidated.phoneNo, {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 60 * 60 * 24 * 365,
-      });
+      if (resolvedPhone) {
+        response.cookies.set(HUB_PASSWORD_SETUP_COOKIE, resolvedPhone, {
+          httpOnly: true,
+          sameSite: "lax",
+          path: "/",
+          maxAge: 60 * 60 * 24 * 365,
+        });
+      }
       return response;
     }
 
-    const result = await loginWithCredentials(trimmedIdentifier, password);
-
-    if (!result.ok) {
-      const status = result.status === 422 ? 401 : result.status || 401;
-      return NextResponse.json({ message: result.message }, { status });
-    }
-
     const response = NextResponse.json(result.data);
+    clearPendingResetCookies(response);
     attachHubSessionCookies(response);
     return response;
   } catch {

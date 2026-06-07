@@ -11,7 +11,10 @@ import {
   PENDING_RESET_TOKEN_COOKIE,
   isHubSessionActive,
 } from "@/lib/auth";
-import { shouldRedirectHubPathToCorporateGateway } from "@/lib/corporate-gateway-middleware";
+import {
+  isCorporateGatewayReferer,
+  shouldRedirectHubPathToCorporateGateway,
+} from "@/lib/corporate-gateway-middleware";
 import {
   isSipGatewayReferer,
   resolveSipGatewayUrlForHubPath,
@@ -88,6 +91,11 @@ function clearSipBrowsingCookies(response: NextResponse) {
   });
 }
 
+function clearSystemBrowsingFlags(response: NextResponse) {
+  response.cookies.set(SIP_BROWSING_COOKIE, "", { path: "/", maxAge: 0 });
+  response.cookies.set(CORPORATE_BROWSING_COOKIE, "", { path: "/", maxAge: 0 });
+}
+
 function getPendingResetRedirectUrl(request: NextRequest): URL | null {
   const pendingResetPhone = request.cookies.get(
     PENDING_PASSWORD_RESET_COOKIE
@@ -127,13 +135,15 @@ export function middleware(request: NextRequest) {
       new URL(isAuthenticated ? "/dashboard" : "/login", request.url)
     );
     if (!isAuthenticated) {
-      response.cookies.set(SIP_BROWSING_COOKIE, "", { path: "/", maxAge: 0 });
-      response.cookies.set(SIP_SESSION_COOKIE, "", {
-        httpOnly: true,
-        sameSite: "lax",
-        path: "/",
-        maxAge: 0,
-      });
+      clearSipBrowsingCookies(response);
+    } else {
+      const referer = request.headers.get("referer");
+      if (
+        !isSipGatewayReferer(referer, request.url) &&
+        !isCorporateGatewayReferer(referer, request.url)
+      ) {
+        clearSystemBrowsingFlags(response);
+      }
     }
     return response;
   }
@@ -201,6 +211,21 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
+  if (
+    pathname === "/dashboard" &&
+    !isSipGatewayReferer(request.headers.get("referer"), request.url) &&
+    !isCorporateGatewayReferer(request.headers.get("referer"), request.url)
+  ) {
+    const hasStaleBrowsingFlag =
+      request.cookies.get(SIP_BROWSING_COOKIE)?.value === "1" ||
+      request.cookies.get(CORPORATE_BROWSING_COOKIE)?.value === "1";
+    if (hasStaleBrowsingFlag) {
+      const response = NextResponse.next();
+      clearSystemBrowsingFlags(response);
+      return response;
+    }
+  }
+
   if (shouldRedirectHubPathToSipGateway(pathname, request)) {
     const sipUrl = resolveSipGatewayUrlForHubPath(pathname, request.url);
     sipUrl.search = request.nextUrl.search;
@@ -214,32 +239,6 @@ export function middleware(request: NextRequest) {
     );
     corporateUrl.search = request.nextUrl.search;
     return NextResponse.redirect(corporateUrl);
-  }
-
-  if (
-    pathname === "/dashboard" &&
-    request.cookies.get(SIP_BROWSING_COOKIE)?.value === "1" &&
-    !request.headers.get("referer")?.includes("/systems/gateway/sip")
-  ) {
-    const response = NextResponse.next();
-    response.cookies.set(SIP_BROWSING_COOKIE, "", {
-      path: "/",
-      maxAge: 0,
-    });
-    return response;
-  }
-
-  if (
-    pathname === "/dashboard" &&
-    request.cookies.get(CORPORATE_BROWSING_COOKIE)?.value === "1" &&
-    !request.headers.get("referer")?.includes("/systems/gateway/corporate")
-  ) {
-    const response = NextResponse.next();
-    response.cookies.set(CORPORATE_BROWSING_COOKIE, "", {
-      path: "/",
-      maxAge: 0,
-    });
-    return response;
   }
 
   return NextResponse.next();
