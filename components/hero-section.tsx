@@ -71,12 +71,12 @@ export function HeroSection({
         <div className="absolute -left-8 bottom-0 h-28 w-28 rounded-full bg-blue-100/80 blur-2xl" />
       </div>
 
-      <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-4 px-6 py-4 sm:grid-cols-[1fr_auto] sm:gap-8 lg:px-10 lg:py-5">
-        <div className="py-1 sm:py-2">
-          <p className="text-xs font-medium uppercase tracking-wider text-primary-muted">
+      <div className="relative mx-auto grid max-w-7xl grid-cols-1 items-center gap-4 px-4 py-3 sm:grid-cols-[1fr_auto] sm:gap-8 sm:px-6 sm:py-4 lg:px-10 lg:py-5">
+        <div className="py-0 sm:py-2">
+          <p className="hidden text-xs font-medium uppercase tracking-wider text-primary-muted sm:block">
             Dashboard
           </p>
-          <h1 className="mt-1 text-xl font-semibold leading-tight tracking-tight text-primary sm:text-2xl lg:text-[1.75rem]">
+          <h1 className="mt-0 text-lg font-semibold leading-tight tracking-tight text-primary sm:mt-1 sm:text-2xl lg:text-[1.75rem]">
             <span
               className="animate-blur-in inline-block"
               style={{ animationDelay: "120ms" }}
@@ -90,14 +90,16 @@ export function HeroSection({
               {userName}
             </span>
           </h1>
-          <p className="mt-1 text-xs text-muted">Last login · {lastLogin}</p>
+          <p className="mt-1 hidden text-xs text-muted sm:block">
+            Last login · {lastLogin}
+          </p>
 
           <div
-            className={`relative mt-3 h-0.5 w-14 origin-left rounded-full transition-colors duration-300 ${accentClass}`}
+            className={`relative mt-3 hidden h-0.5 w-14 origin-left rounded-full transition-colors duration-300 sm:block ${accentClass}`}
           />
 
           <div
-            className="mt-4 min-h-[3.5rem] max-w-xl"
+            className="mt-4 hidden min-h-[3.5rem] max-w-xl sm:block"
             onMouseLeave={onDescriptionHoverEnd}
           >
             {activeCard && (

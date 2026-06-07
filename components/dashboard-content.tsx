@@ -23,7 +23,7 @@ export function DashboardContent() {
   const { userName, lastLogin } = useDashboard();
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div className="flex flex-col lg:min-h-0 lg:flex-1">
       {showAddedBanner && (
         <div className="mx-auto w-full max-w-7xl px-4 pt-3 lg:px-8">
           <InlineAlert
@@ -42,7 +42,7 @@ export function DashboardContent() {
         onDescriptionHoverEnd={() => setHoveredCardId(null)}
       />
       <SystemHealthStrip />
-      <div className="mx-auto flex w-full max-w-7xl min-h-0 flex-1 flex-col px-4 py-3 lg:px-8 lg:py-4">
+      <div className="mx-auto w-full max-w-7xl flex-none px-4 py-3 pb-24 sm:pb-6 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col lg:px-8 lg:py-4 lg:pb-4">
         <ActionCards
           hoveredCardId={hoveredCardId}
           onCardHover={setHoveredCardId}

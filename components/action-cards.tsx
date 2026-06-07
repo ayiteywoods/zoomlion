@@ -74,7 +74,7 @@ export function ActionCards({ hoveredCardId, onCardHover }: ActionCardsProps) {
   }
 
   return (
-    <section className="animate-fade-in relative flex min-h-0 flex-1 flex-col justify-center overflow-visible [animation-delay:350ms]">
+    <section className="animate-fade-in relative flex flex-col justify-start lg:min-h-0 lg:flex-1 lg:justify-center lg:overflow-visible [animation-delay:350ms]">
       <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
         <AnimatedBackground />
       </div>
@@ -95,7 +95,7 @@ export function ActionCards({ hoveredCardId, onCardHover }: ActionCardsProps) {
         </p>
       ) : (
         <div
-          className={`relative grid h-full min-h-0 w-full items-stretch gap-2 p-1 sm:gap-3 lg:gap-4 lg:p-2 ${
+          className={`relative grid w-full items-stretch gap-2 p-1 sm:gap-3 lg:h-full lg:min-h-0 lg:gap-4 lg:p-2 ${
             visibleCards.length === 1
               ? "mx-auto max-w-sm grid-cols-1"
               : visibleCards.length === 2

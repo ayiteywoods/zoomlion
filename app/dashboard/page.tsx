@@ -23,7 +23,7 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="flex h-dvh flex-col overflow-hidden">
+    <div className="dashboard-shell flex h-dvh flex-col overflow-hidden">
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[200] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-primary focus:shadow-lg"
@@ -33,7 +33,7 @@ export default async function DashboardPage() {
       <SiteHeader />
       <main
         id="main-content"
-        className="relative flex min-h-0 flex-1 flex-col overflow-hidden bg-surface"
+        className="dashboard-main-scroll relative flex h-0 min-h-0 flex-1 flex-col bg-surface lg:overflow-hidden"
       >
         <DashboardContent />
       </main>

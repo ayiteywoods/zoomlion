@@ -182,7 +182,7 @@ export function ActionCard({
   const hoverBadgeVisible = isActive ? "opacity-100 scale-100" : "opacity-0 scale-90";
   const statusStyle = statusConfig[status];
 
-  const linkClassName = `group animate-fade-in-up relative flex h-full min-h-[250px] w-full flex-col overflow-visible rounded-lg px-4 pb-3 pt-4 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:min-h-[270px] sm:px-5 sm:pb-4 sm:pt-5 ${styles.card} ${
+  const linkClassName = `group animate-fade-in-up relative flex h-full min-h-[210px] w-full flex-col overflow-visible rounded-lg px-3 pb-3 pt-3 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:min-h-[270px] sm:px-5 sm:pb-4 sm:pt-5 ${styles.card} ${
     isActive
       ? `-translate-y-0.5 ${styles.activeShadow} ${activeBorderByVariant[variant]}`
       : ""

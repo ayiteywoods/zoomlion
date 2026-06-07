@@ -386,6 +386,27 @@ html.dark body {
   color: var(--color-primary);
 }
 
+/* Dashboard: scroll inside main on mobile (body stays overflow:hidden) */
+.dashboard-main-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+}
+
+@supports (height: 100dvh) {
+  .dashboard-shell {
+    height: 100dvh;
+  }
+}
+
+@media (min-width: 1024px) {
+  .dashboard-main-scroll {
+    overflow-y: hidden;
+  }
+}
+
 .group:hover .group-hover\:animate-bell-ring {
   animation: bell-ring 0.6s ease-in-out;
 }
