@@ -15,6 +15,7 @@ export function getCardSystemMeta(cardId: DashboardCardId): {
   status: SystemStatus;
   isPrimary?: boolean;
   actionLabel: string;
+  disabled?: boolean;
 } {
   if (isCustomCardId(cardId)) {
     const systemId = getCustomSystemIdFromCardId(cardId);

@@ -6,6 +6,7 @@ import {
   BuildingOffice2Icon,
   ChevronDownIcon as HeroChevronDown,
   PlusIcon as HeroPlus,
+  UserGroupIcon,
 } from "@heroicons/react/24/solid";
 
 export const cardIconClass = "h-12 w-12 sm:h-14 sm:w-14";
@@ -48,4 +49,8 @@ export function BiohazardBinIcon({ className }: { className?: string }) {
 
 export function PlusIcon({ className }: { className?: string }) {
   return <HeroPlus className={className ?? cardIconClass} aria-hidden />;
+}
+
+export function BeneficiaryIcon({ className }: { className?: string }) {
+  return <UserGroupIcon className={className ?? cardIconClass} aria-hidden />;
 }

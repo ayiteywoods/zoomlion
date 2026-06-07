@@ -16,7 +16,8 @@ const accentByCard = {
   iwaste: "bg-emerald-500",
   corporate: "bg-violet-500",
   sip: "bg-amber-500",
-  "add-company": "bg-rose-500",
+  beneficiary: "bg-rose-500",
+  // "add-company": "bg-rose-500",
 } as const;
 
 type HeroSectionProps = {

@@ -21,28 +21,31 @@ export const roleDescriptions: Record<UserRole, string> = {
   "platform-admin": "All systems including company registration",
 };
 
+/** Fourth dashboard slot card (beneficiary now; add-company reserved for future). */
+const FOURTH_SLOT_CARD_ID = "beneficiary" as const;
+
 const roleCardAccess: Record<UserRole, DashboardCardId[]> = {
-  "operations-manager": ["iwaste", "corporate", "sip", "add-company"],
+  "operations-manager": ["iwaste", "corporate", "sip", FOURTH_SLOT_CARD_ID],
   "field-supervisor": ["iwaste", "sip"],
   "corporate-admin": ["iwaste", "corporate"],
-  "platform-admin": ["iwaste", "corporate", "sip", "add-company"],
+  "platform-admin": ["iwaste", "corporate", "sip", FOURTH_SLOT_CARD_ID],
 };
 
 export function getVisibleCardIds(role: UserRole): DashboardCardId[] {
   const base = roleCardAccess[role];
-  if (!base.includes("add-company")) return base;
+  if (!base.includes(FOURTH_SLOT_CARD_ID)) return base;
 
   const customIds = readCustomSystems().map(
     (system) => `custom-${system.id}` as DashboardCardId
   );
-  const withoutAdd = base.filter((id) => id !== "add-company");
+  const withoutSlot = base.filter((id) => id !== FOURTH_SLOT_CARD_ID);
 
-  return [...withoutAdd, ...customIds, "add-company"];
+  return [...withoutSlot, ...customIds, FOURTH_SLOT_CARD_ID];
 }
 
 export function canAccessCard(role: UserRole, cardId: DashboardCardId): boolean {
   if (isCustomCardId(cardId)) {
-    return roleCardAccess[role].includes("add-company");
+    return roleCardAccess[role].includes(FOURTH_SLOT_CARD_ID);
   }
   return roleCardAccess[role].includes(cardId);
 }

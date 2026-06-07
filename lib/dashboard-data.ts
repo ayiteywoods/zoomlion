@@ -54,6 +54,12 @@ export const systemHealthItems: SystemHealthItem[] = [
     message: "Operational",
   },
   {
+    id: "beneficiary",
+    label: "Beneficiary",
+    state: "maintenance",
+    message: "Under maintenance",
+  },
+  {
     id: "platform",
     label: "Platform",
     state: "operational",
@@ -96,13 +102,13 @@ export const globalSearchItems: SearchItem[] = [
     category: "System",
     openInNewTab: true,
   },
-  {
-    id: "add-company",
-    label: "Add New Company",
-    description: "Register a company on the platform",
-    href: "/companies/new",
-    category: "Action",
-  },
+  // {
+  //   id: "add-company",
+  //   label: "Add New Company",
+  //   description: "Register a company on the platform",
+  //   href: "/companies/new",
+  //   category: "Action",
+  // },
   {
     id: "site-a",
     label: "Site A — Industrial zone",
@@ -127,6 +133,7 @@ export const cardSystemMeta: Record<
     status: SystemStatus;
     isPrimary?: boolean;
     actionLabel: string;
+    disabled?: boolean;
   }
 > = {
   iwaste: {
@@ -147,6 +154,12 @@ export const cardSystemMeta: Record<
     external: true,
     status: "available",
     actionLabel: "Go to SIP",
+  },
+  beneficiary: {
+    href: "",
+    status: "maintenance",
+    disabled: true,
+    actionLabel: "Under maintenance",
   },
   "add-company": {
     href: "/companies/new",

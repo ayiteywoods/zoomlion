@@ -8,7 +8,6 @@ import {
   RecycleBinIcon,
   BuildingIcon,
   BiohazardBinIcon,
-  PlusIcon,
   cardIconClass,
 } from "@/components/icons";
 import { useDashboard } from "@/components/dashboard-provider";
@@ -111,11 +110,11 @@ export function ActionCards({ hoveredCardId, onCardHover }: ActionCardsProps) {
               <ActionCard
                 key={card.id}
                 title={card.title}
-                description={card.cardDescription}
                 href={meta.href}
                 external={meta.external}
                 status={meta.status}
                 isPrimary={meta.isPrimary}
+                disabled={meta.disabled}
                 logoSrc={card.logoSrc}
                 logoAlt={card.logoAlt}
                 logoImageClassName={card.logoImageClassName}
@@ -123,11 +122,6 @@ export function ActionCards({ hoveredCardId, onCardHover }: ActionCardsProps) {
                   card.id in hoverIcons
                     ? hoverIcons[card.id as keyof typeof hoverIcons]
                     : undefined
-                }
-                icon={
-                  card.id === "add-company" ? (
-                    <PlusIcon className={cardIconClass} />
-                  ) : undefined
                 }
                 variant={card.variant}
                 animationDelay={450 + index * 100}

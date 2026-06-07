@@ -7,6 +7,7 @@ export type BuiltInDashboardCardId =
   | "iwaste"
   | "corporate"
   | "sip"
+  | "beneficiary"
   | "add-company";
 
 export type DashboardCardId = BuiltInDashboardCardId | `custom-${string}`;
@@ -61,22 +62,37 @@ export const dashboardCards: DashboardCard[] = [
     logoAlt: "Zoomlion logo",
   },
   {
-    id: "add-company",
-    title: "Add New Company",
-    cardDescription:
-      "Add a system with name, description, URL, and logo to the hub.",
+    id: "beneficiary",
+    title: "Beneficiary Management System",
+    cardDescription: "",
     heroDescription:
-      "Add a new system to the hub with a name, description, URL, and logo. It will appear on your dashboard for quick access.",
+      "Manage beneficiary records, eligibility, and programme enrolment. This system is currently under maintenance and will be available soon.",
     variant: "rose",
+    logoSrc: "/bms.png",
+    logoAlt: "Beneficiary Management System",
   },
+  // {
+  //   id: "add-company",
+  //   title: "Add New Company",
+  //   cardDescription:
+  //     "Add a system with name, description, URL, and logo to the hub.",
+  //   heroDescription:
+  //     "Add a new system to the hub with a name, description, URL, and logo. It will appear on your dashboard for quick access.",
+  //   variant: "rose",
+  // },
 ];
+
+/** Fourth dashboard slot — beneficiary for now; add-company reserved for future use. */
+const FOURTH_SLOT_CARD_ID: BuiltInDashboardCardId = "beneficiary";
 
 export function getAllDashboardCards(): DashboardCard[] {
   const customCards = getCustomDashboardCards();
-  const withoutAdd = dashboardCards.filter((card) => card.id !== "add-company");
-  const addCard = dashboardCards.find((card) => card.id === "add-company");
-  if (!addCard) return [...withoutAdd, ...customCards];
-  return [...withoutAdd, ...customCards, addCard];
+  const coreCards = dashboardCards.filter(
+    (card) => card.id !== FOURTH_SLOT_CARD_ID && card.id !== "add-company"
+  );
+  const slotCard = dashboardCards.find((card) => card.id === FOURTH_SLOT_CARD_ID);
+  if (!slotCard) return [...coreCards, ...customCards];
+  return [...coreCards, ...customCards, slotCard];
 }
 
 export function findDashboardCard(

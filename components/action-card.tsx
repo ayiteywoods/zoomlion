@@ -15,7 +15,7 @@ const statusConfig: Record<
       "bg-emerald-50 text-emerald-800 ring-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:ring-emerald-800/50",
   },
   maintenance: {
-    label: "Maintenance",
+    label: "Under Maintenance",
     dot: "bg-amber-500",
     badge:
       "bg-amber-50 text-amber-800 ring-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:ring-amber-800/50",
@@ -136,7 +136,7 @@ const logoAnimationByVariant: Record<ActionCardVariant, string> = {
 
 type ActionCardProps = {
   title: string;
-  description: string;
+  description?: string;
   icon?: ReactNode;
   logoSrc?: string;
   logoAlt?: string;
@@ -154,6 +154,7 @@ type ActionCardProps = {
   onHoverEnd?: () => void;
   onLaunch?: () => void;
   launchDisabled?: boolean;
+  disabled?: boolean;
 };
 
 export function ActionCard({
@@ -176,6 +177,7 @@ export function ActionCard({
   onHoverEnd,
   onLaunch,
   launchDisabled = false,
+  disabled = false,
 }: ActionCardProps) {
   const styles = variantStyles[variant];
   const showHoverBadge = Boolean(hoverIcon);
@@ -183,6 +185,8 @@ export function ActionCard({
   const statusStyle = statusConfig[status];
 
   const linkClassName = `group animate-fade-in-up relative flex h-full min-h-[210px] w-full flex-col overflow-visible rounded-lg px-3 pb-3 pt-3 text-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 sm:min-h-[270px] sm:px-5 sm:pb-4 sm:pt-5 ${styles.card} ${
+    disabled ? "cursor-not-allowed opacity-95" : ""
+  } ${
     isActive
       ? `-translate-y-0.5 ${styles.activeShadow} ${activeBorderByVariant[variant]}`
       : ""
@@ -294,14 +298,18 @@ export function ActionCard({
         >
           {title}
         </h2>
-        <div
-          className={`relative my-2 h-0.5 w-8 origin-center rounded-full transition-all duration-300 group-hover:w-10 ${styles.accent}`}
-        />
-        <p
-          className={`relative mx-auto line-clamp-3 max-w-[18rem] text-center text-[11px] leading-4 sm:text-xs sm:leading-5 ${styles.description}`}
-        >
-          {description}
-        </p>
+        {description ? (
+          <>
+            <div
+              className={`relative my-2 h-0.5 w-8 origin-center rounded-full transition-all duration-300 group-hover:w-10 ${styles.accent}`}
+            />
+            <p
+              className={`relative mx-auto line-clamp-3 max-w-[18rem] text-center text-[11px] leading-4 sm:text-xs sm:leading-5 ${styles.description}`}
+            >
+              {description}
+            </p>
+          </>
+        ) : null}
         </div>
 
         <div className="mt-auto flex w-full items-center justify-end gap-2.5 border-t border-line/80 pt-3">
@@ -328,16 +336,30 @@ export function ActionCard({
         <button
           type="button"
           {...linkProps}
-          disabled={launchDisabled}
+          disabled={launchDisabled || disabled}
           onClick={(event) => {
             event.preventDefault();
             event.stopPropagation();
-            if (!launchDisabled) onLaunch();
+            if (!launchDisabled && !disabled) onLaunch();
           }}
-          className={`${linkClassName} w-full cursor-pointer border-0 bg-transparent p-0 text-left disabled:cursor-wait disabled:opacity-80`}
+          className={`${linkClassName} w-full cursor-pointer border-0 bg-transparent p-0 text-left disabled:cursor-not-allowed disabled:opacity-80`}
         >
           {cardContent}
         </button>
+      </div>
+    );
+  }
+
+  if (disabled) {
+    return (
+      <div className="h-full p-1">
+        <div
+          {...linkProps}
+          aria-disabled="true"
+          className={`${linkClassName} pointer-events-none`}
+        >
+          {cardContent}
+        </div>
       </div>
     );
   }
