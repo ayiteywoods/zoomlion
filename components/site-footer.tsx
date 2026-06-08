@@ -12,7 +12,7 @@ export function SiteFooter() {
       />
       <div className="relative mx-auto flex max-w-7xl flex-col items-center justify-between gap-2 text-xs sm:flex-row">
         <p className="animate-fade-in text-center text-on-brand-muted sm:text-left [animation-delay:850ms]">
-          © 2026 Zoomlion Waste Management. All rights reserved.
+          © 2026 ZoomLion Ghana Ltd. All rights reserved.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
           <a
