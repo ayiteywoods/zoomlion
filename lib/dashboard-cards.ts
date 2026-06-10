@@ -36,8 +36,8 @@ export const dashboardCards: DashboardCard[] = [
     heroDescription:
       "Access the iWaste System to track collections, monitor routes, and manage day-to-day waste operations across your sites in one place.",
     variant: "emerald",
-    logoSrc: "/zl.png",
-    logoAlt: "Zoomlion logo",
+    logoSrc: "/iwaste.png",
+    logoAlt: "iWaste System",
   },
   {
     id: "corporate",
@@ -47,8 +47,8 @@ export const dashboardCards: DashboardCard[] = [
     heroDescription:
       "Delivering end-to-end environmental solutions tailored to the needs of corporate organisations, institutions, and industries that demand reliability, compliance, and a cleaner operational footprint.",
     variant: "violet",
-    logoSrc: "/zl.png",
-    logoAlt: "Zoomlion logo",
+    logoSrc: "/corporate.png",
+    logoAlt: "Corporate Business System",
   },
   {
     id: "sip",
@@ -58,8 +58,8 @@ export const dashboardCards: DashboardCard[] = [
     heroDescription:
       "Transforming local environments into cleaner, healthier, and more sustainable communities by collaborating with local authorities.",
     variant: "amber",
-    logoSrc: "/zl.png",
-    logoAlt: "Zoomlion logo",
+    logoSrc: "/sip.png",
+    logoAlt: "SIP System",
   },
   {
     id: "beneficiary",

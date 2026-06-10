@@ -32,9 +32,9 @@ const LOGIN_BG_SLOTS = 8;
 const LOGIN_BG_SLOT_S = LOGIN_BG_CYCLE_S / LOGIN_BG_SLOTS;
 
 const connectedSystemLogos = [
-  { src: "/zl.png", alt: "Zoomlion", label: "iWaste" },
-  { src: "/zl.png", alt: "Zoomlion", label: "Corporate" },
-  { src: "/zl.png", alt: "Zoomlion", label: "SIP" },
+  { src: "/iwaste.png", alt: "iWaste System", label: "iWaste" },
+  { src: "/corporate.png", alt: "Corporate Business System", label: "Corporate" },
+  { src: "/sip.png", alt: "SIP System", label: "SIP" },
 ] as const;
 
 const connectedSystemLogoImageClass =
@@ -313,22 +313,22 @@ function LoginBackground() {
       <LoginBgRing
         slot={5}
         className="left-1/2 top-[6%] h-40 w-40 -translate-x-1/2 sm:h-48 sm:w-48"
-        logoSrc="/zl.png"
-        logoAlt="Zoomlion"
+        logoSrc="/iwaste.png"
+        logoAlt="iWaste System"
       />
 
       <LoginBgRing
         slot={6}
         className="right-[4%] top-[42%] h-40 w-40 sm:h-48 sm:w-48"
-        logoSrc="/zl.png"
-        logoAlt="Zoomlion"
+        logoSrc="/corporate.png"
+        logoAlt="Corporate Business System"
       />
 
       <LoginBgRing
         slot={7}
         className="left-[4%] top-[42%] h-40 w-40 sm:h-48 sm:w-48"
-        logoSrc="/zl.png"
-        logoAlt="Zoomlion"
+        logoSrc="/sip.png"
+        logoAlt="SIP System"
       />
 
       <div className="absolute inset-0 bg-gradient-to-b from-brand-950/20 via-transparent to-brand-950/40" />
@@ -605,7 +605,7 @@ export function LoginPage() {
                         >
                           <Image
                             src={system.src}
-                            alt={`${system.label} — Zoomlion`}
+                            alt={system.alt}
                             width={80}
                             height={28}
                             className={connectedSystemLogoImageClass}
