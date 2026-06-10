@@ -487,10 +487,10 @@ export function LoginPage() {
               </div>
 
               <div className="relative border-b border-slate-100 pb-5 pt-0.5 dark:border-slate-800">
-                <h2 className="text-center text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-50 lg:text-left">
+                <h2 className="text-center text-lg font-semibold uppercase tracking-[0.14em] text-slate-900 dark:text-slate-50">
                   Welcome back
                 </h2>
-                <p className="mt-1.5 text-center text-sm leading-relaxed text-slate-600 dark:text-slate-400 lg:text-left">
+                <p className="mt-1.5 text-center text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                   Sign in to access your connected system.
                 </p>
                 {searchParams.get("reason") === "idle" && (
