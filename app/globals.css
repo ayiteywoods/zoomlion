@@ -65,6 +65,7 @@
   --animate-settings-float: settings-float 3s ease-in-out infinite;
   --animate-drawer-in: drawer-in 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-backdrop-in: backdrop-in 0.25s ease-out both;
+  --animate-login-logo-flip: login-logo-flip 7s ease-in-out infinite;
 }
 
 @keyframes fade-in-down {
@@ -470,6 +471,27 @@ html.dark body {
   will-change: transform, opacity;
 }
 
+@keyframes login-logo-flip {
+  0%,
+  68% {
+    transform: rotateY(0deg);
+  }
+  84% {
+    transform: rotateY(180deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+
+.zl-login-logo-flip {
+  animation: login-logo-flip 7s ease-in-out infinite;
+  transform-origin: center center;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
 @keyframes zl-login-bg-drift {
   0%,
   100% {
@@ -709,6 +731,7 @@ html.dark body {
 @media (prefers-reduced-motion: reduce) {
   .zl-login-icon-cycle,
   .zl-login-ring-cycle,
+  .zl-login-logo-flip,
   .zl-login-bg-drift,
   .zl-login-bg-drift-alt,
   .zl-login-grid-breathe,

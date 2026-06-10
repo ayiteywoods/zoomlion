@@ -442,23 +442,34 @@ export function LoginPage() {
 
       <LoginBackground />
 
-      <div className="relative z-10 flex justify-center pt-5 lg:hidden">
-        <Image
-          src="/zl.png"
-          alt="Zoomlion"
-          width={120}
-          height={48}
-          className="h-9 w-auto object-contain opacity-95"
-          priority
-        />
-      </div>
-
-      <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-6 sm:py-8">
+      <div className="relative z-10 flex flex-1 items-center justify-center px-4 py-8 pt-12 sm:py-10 sm:pt-14">
         <div className="flex w-full max-w-6xl flex-col items-center gap-8 sm:gap-10 lg:flex-row lg:items-center lg:justify-between lg:gap-16 xl:gap-24">
           <div className="animate-fade-in-up order-1 w-full max-w-md shrink-0 [animation-delay:120ms] lg:order-2">
-            <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/95 p-7 shadow-[0_8px_32px_rgba(15,23,42,0.14),0_24px_56px_rgba(15,23,42,0.22)] backdrop-blur-sm sm:p-8 dark:border-slate-700/60 dark:bg-slate-900/95 dark:shadow-black/40">
+            <div className="relative">
+              <div className="absolute left-1/2 top-0 z-20 -translate-x-1/2 -translate-y-1/2 [perspective:1000px]">
+                <div className="relative h-24 w-24 zl-login-logo-flip sm:h-28 sm:w-28">
+                  <div
+                    className="pointer-events-none absolute inset-0 rounded-full bg-gradient-to-r from-brand-800 via-brand-600 to-brand-500 p-[3px] [mask-image:linear-gradient(to_bottom,transparent_50%,black_50%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_50%,black_50%)] sm:p-1"
+                    aria-hidden
+                  >
+                    <div className="h-full w-full rounded-full bg-transparent" />
+                  </div>
+                  <div className="absolute inset-[3px] flex items-center justify-center rounded-full bg-white shadow-[0_10px_28px_rgba(15,23,42,0.14)] ring-1 ring-slate-200/80 sm:inset-1">
+                    <Image
+                      src="/zl.png"
+                      alt="ZoomLion Ghana Ltd"
+                      width={112}
+                      height={112}
+                      className="h-[92%] w-[92%] object-contain"
+                      priority
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/95 px-7 pb-7 pt-14 shadow-[0_8px_32px_rgba(15,23,42,0.14),0_24px_56px_rgba(15,23,42,0.22)] backdrop-blur-sm sm:px-8 sm:pb-8 sm:pt-16 dark:border-slate-700/60 dark:bg-slate-900/95 dark:shadow-black/40">
               <div
-                className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-brand-800 via-brand-600 to-brand-500"
+                className="pointer-events-none absolute inset-x-0 top-0 z-[15] h-1 rounded-t-2xl bg-gradient-to-r from-brand-800 via-brand-600 to-brand-500"
                 aria-hidden
               />
 
@@ -476,19 +487,7 @@ export function LoginPage() {
               </div>
 
               <div className="relative border-b border-slate-100 pb-5 pt-0.5 dark:border-slate-800">
-                <div className="hidden justify-center lg:flex lg:justify-start">
-                  <Image
-                    src="/zl.png"
-                    alt=""
-                    width={112}
-                    height={44}
-                    className="h-9 w-auto object-contain"
-                    priority
-                    aria-hidden
-                  />
-                </div>
-
-                <h2 className="mt-3 text-center text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-50 lg:mt-4 lg:text-left">
+                <h2 className="text-center text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-50 lg:text-left">
                   Welcome back
                 </h2>
                 <p className="mt-1.5 text-center text-sm leading-relaxed text-slate-600 dark:text-slate-400 lg:text-left">
@@ -619,6 +618,7 @@ export function LoginPage() {
                   </div>
                 </div>
               </form>
+              </div>
             </div>
           </div>
 
