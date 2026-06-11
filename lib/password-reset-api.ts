@@ -1,7 +1,7 @@
 import { getAuthApiBaseUrl, getLoginErrorMessage } from "@/lib/auth-api";
+import { SIP_API_BASE } from "@/lib/sip-web-auth";
 
 const DEFAULT_CORPORATE_ORIGIN = "https://corporate.adudor.com";
-const DEFAULT_SIP_API_BASE = "http://sip.nerasolgh.com:8085/iwmis-pcm/api";
 
 export const AUTH_RESET_PATH = "/auth/reset";
 export const AUTH_RESET_VERIFY_PATHS = [
@@ -56,7 +56,7 @@ function getSipResetPasswordUrl(): string {
   const base =
     process.env.SIP_API_URL ??
     process.env.NEXT_PUBLIC_SIP_API_URL ??
-    DEFAULT_SIP_API_BASE;
+    SIP_API_BASE;
   return `${base.replace(/\/$/, "")}/reset/password`;
 }
 

@@ -8,7 +8,8 @@ import {
   type CookieJar,
 } from "@/lib/system-auth-cookies";
 
-export const SIP_ORIGIN = "http://sip.nerasolgh.com:8085/iwmis-pcm";
+export const SIP_ORIGIN = "https://sip.adudor.com";
+export const SIP_API_BASE = `${SIP_ORIGIN}/api`;
 export const SIP_GATEWAY_ENTRY = "/systems/gateway/sip";
 const SIP_LOGIN_URL = `${SIP_ORIGIN}/login`;
 const SIP_ENTRY_URL = `${SIP_ORIGIN}/`;
@@ -26,14 +27,14 @@ export type SipWebLoginResult =
   | { ok: false; message?: string };
 
 export async function loginSipWebSession(
-  email: string,
+  loginId: string,
   password: string
 ): Promise<SipWebLoginResult> {
-  const trimmedEmail = email.trim();
-  if (!trimmedEmail.includes("@")) {
+  const trimmedLoginId = loginId.trim();
+  if (!trimmedLoginId) {
     return {
       ok: false,
-      message: "SIP sign-in requires a valid email address.",
+      message: "SIP sign-in requires an email address or phone number.",
     };
   }
 
@@ -46,7 +47,7 @@ export async function loginSipWebSession(
 
   const body = new URLSearchParams({
     _token: csrf,
-    email: trimmedEmail,
+    email: trimmedLoginId,
     password,
   });
 

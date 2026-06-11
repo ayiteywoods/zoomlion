@@ -24,8 +24,8 @@ export const systemLaunchConfigs: Record<ExternalSystemId, SystemLaunchConfig> =
     sip: {
       id: "sip",
       label: "SIP",
-      loginUrl: "http://sip.nerasolgh.com:8085/iwmis-pcm/login",
-      dashboardUrl: "http://sip.nerasolgh.com:8085/iwmis-pcm/",
+      loginUrl: "https://sip.adudor.com/login",
+      dashboardUrl: "https://sip.adudor.com/",
     },
   };
 

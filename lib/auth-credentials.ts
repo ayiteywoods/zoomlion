@@ -5,22 +5,27 @@ export type StoredAuthCredentials = {
   password: string;
   /** Preferred username for Corporate web (often email from API profile) */
   corporateLoginId?: string;
-  /** SIP API/web login (email) */
+  /** Optional SIP login override (email or phone) */
   sipEmail?: string;
 };
 
-export function resolveSipEmail(credentials: StoredAuthCredentials): string | null {
-  if (credentials.sipEmail?.includes("@")) {
+export function resolveSipLoginId(
+  credentials: StoredAuthCredentials
+): string | null {
+  if (credentials.sipEmail?.trim()) {
     return credentials.sipEmail.trim();
   }
-  if (credentials.corporateLoginId?.includes("@")) {
+  if (credentials.corporateLoginId?.trim()) {
     return credentials.corporateLoginId.trim();
   }
-  if (credentials.phone.includes("@")) {
+  if (credentials.phone.trim()) {
     return credentials.phone.trim();
   }
   return null;
 }
+
+/** @deprecated Use resolveSipLoginId */
+export const resolveSipEmail = resolveSipLoginId;
 
 export function saveAuthCredentials(
   phone: string,

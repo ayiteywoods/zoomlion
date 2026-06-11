@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import BrandedLoader from "@/components/branded-loader";
-import { getAuthCredentials, resolveSipEmail } from "@/lib/auth-credentials";
+import { getAuthCredentials, resolveSipLoginId } from "@/lib/auth-credentials";
 import {
   getSystemLaunchConfig,
   isExternalSystemId,
@@ -134,11 +134,11 @@ export default function SystemLaunchPage() {
         }
 
         if (system === "sip") {
-          const sipEmail = resolveSipEmail(credentials!);
-          if (!sipEmail) {
-            setMessage("SIP requires an email address. Returning to hub sign-in…");
+          const sipLoginId = resolveSipLoginId(credentials!);
+          if (!sipLoginId) {
+            setMessage("Missing hub credentials. Returning to sign-in…");
             window.setTimeout(() => {
-              router.replace("/login?reason=sip-email");
+              router.replace("/login");
             }, 1200);
             return;
           }
@@ -146,7 +146,7 @@ export default function SystemLaunchPage() {
             "/api/systems/sip/session",
             "SIP",
             undefined,
-            sipEmail
+            sipLoginId
           );
           return;
         }
@@ -158,7 +158,7 @@ export default function SystemLaunchPage() {
             system,
             phone: credentials!.phone,
             password: credentials!.password,
-            sipEmail: resolveSipEmail(credentials!) ?? undefined,
+            sipEmail: resolveSipLoginId(credentials!) ?? undefined,
           }),
         });
 

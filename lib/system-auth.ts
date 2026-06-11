@@ -172,30 +172,33 @@ export async function createCorporateGatewaySession(
   };
 }
 
-function resolveSipEmailForAccess(username: string, sipEmail?: string): string | null {
-  if (sipEmail?.trim() && sipEmail.includes("@")) return sipEmail.trim();
-  if (isEmailIdentifier(username)) return username.trim();
+function resolveSipLoginIdForAccess(
+  username: string,
+  sipLoginOverride?: string
+): string | null {
+  if (sipLoginOverride?.trim()) return sipLoginOverride.trim();
+  if (username.trim()) return username.trim();
   return null;
 }
 
 async function verifySipAccess(
   username: string,
   password: string,
-  sipEmail?: string
+  sipLoginOverride?: string
 ): Promise<SystemAccessResult> {
   const config = getSystemLaunchConfig("sip");
-  const email = resolveSipEmailForAccess(username, sipEmail);
+  const loginId = resolveSipLoginIdForAccess(username, sipLoginOverride);
 
-  if (!email) {
+  if (!loginId) {
     return {
       ok: false,
       loginUrl: config.loginUrl,
       message:
-        "SIP requires an email address. Sign in to the hub with your SIP email, then try again.",
+        "SIP requires an email address or phone number. Sign in to the hub, then try again.",
     };
   }
 
-  const webResult = await loginSipWebSession(email, password);
+  const webResult = await loginSipWebSession(loginId, password);
 
   if (!webResult.ok) {
     return {
@@ -203,7 +206,7 @@ async function verifySipAccess(
       loginUrl: config.loginUrl,
       message:
         webResult.message ??
-        "Unable to sign in to SIP. Use your SIP email address and password.",
+        "Unable to sign in to SIP. Use your SIP email or phone and password.",
     };
   }
 
@@ -214,8 +217,8 @@ async function verifySipAccess(
   };
 }
 
-export async function createSipGatewaySession(email: string, password: string) {
-  return loginSipWebSession(email, password);
+export async function createSipGatewaySession(loginId: string, password: string) {
+  return loginSipWebSession(loginId, password);
 }
 
 export async function verifySystemAccess(

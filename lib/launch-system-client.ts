@@ -2,7 +2,7 @@
 
 import {
   getAuthCredentials,
-  resolveSipEmail,
+  resolveSipLoginId,
   type StoredAuthCredentials,
 } from "@/lib/auth-credentials";
 import type { ExternalSystemId } from "@/lib/system-launch";
@@ -28,9 +28,9 @@ function submitSessionForm(
     fields.push(["corporate_login_id", credentials.corporateLoginId]);
   }
 
-  const sipEmail = resolveSipEmail(credentials);
-  if (sipEmail) {
-    fields.push(["sip_email", sipEmail]);
+  const sipLoginId = resolveSipLoginId(credentials);
+  if (sipLoginId) {
+    fields.push(["sip_email", sipLoginId]);
   }
 
   for (const [name, value] of fields) {
@@ -56,11 +56,10 @@ export function launchExternalSystem(system: ExternalSystemId): LaunchResult {
     return { ok: false, message: "Please sign in to the hub first." };
   }
 
-  if (system === "sip" && !resolveSipEmail(credentials)) {
+  if (system === "sip" && !resolveSipLoginId(credentials)) {
     return {
       ok: false,
-      message:
-        "SIP requires an email address. Sign in with your SIP email, or use a hub account that has an email on file.",
+      message: "Please sign in to the hub first.",
     };
   }
 

@@ -1,7 +1,7 @@
 const DEFAULT_IWASTE_API_BASE = "https://iwaste.adudor.com/api";
 const DEFAULT_CORPORATE_ORIGIN = "https://corporate.adudor.com";
 const DEFAULT_CORPORATE_LOGIN_URL = `${DEFAULT_CORPORATE_ORIGIN}/api/login`;
-import { loginSipWebSession } from "@/lib/sip-web-auth";
+import { loginSipWebSession, SIP_API_BASE } from "@/lib/sip-web-auth";
 import {
   buildHubLoginFailure,
   type HubSystemId,
@@ -9,8 +9,6 @@ import {
   type SystemLoginAttempt,
   toSystemLoginAttempt,
 } from "@/lib/login-error-messages";
-
-const DEFAULT_SIP_API_BASE = "http://sip.nerasolgh.com:8085/iwmis-pcm/api";
 
 export const AUTH_LOGIN_PATH = "/auth/user";
 export const AUTH_PROFILE_PATH = "/profile";
@@ -43,7 +41,7 @@ export function getSipLoginApiUrl(): string {
   const base =
     process.env.SIP_API_URL ??
     process.env.NEXT_PUBLIC_SIP_API_URL ??
-    DEFAULT_SIP_API_BASE;
+    SIP_API_BASE;
   return `${base.replace(/\/$/, "")}/login`;
 }
 
@@ -455,16 +453,16 @@ export async function loginCorporateWithCredentials(
 }
 
 export async function loginSipWithCredentials(
-  email: string,
+  loginId: string,
   password: string
 ): Promise<LoginResult> {
-  const trimmedEmail = email.trim();
+  const trimmedLoginId = loginId.trim();
 
-  if (!isEmailIdentifier(trimmedEmail)) {
+  if (!trimmedLoginId) {
     return {
       ok: false,
       status: 400,
-      message: "SIP sign-in requires an email address.",
+      message: "SIP sign-in requires an email address or phone number.",
     };
   }
 
@@ -476,7 +474,7 @@ export async function loginSipWithCredentials(
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        username: trimmedEmail,
+        username: trimmedLoginId,
         password,
       }),
     });
@@ -492,15 +490,16 @@ export async function loginSipWithCredentials(
     // API unreachable — fall through to web session login below
   }
 
-  const webResult = await loginSipWebSession(trimmedEmail, password);
+  const webResult = await loginSipWebSession(trimmedLoginId, password);
 
   if (webResult.ok) {
     return {
       ok: true,
       data: {
         user: normalizeAuthUser({
-          email: trimmedEmail,
-          username: trimmedEmail,
+          email: isEmailIdentifier(trimmedLoginId) ? trimmedLoginId : undefined,
+          phone: isEmailIdentifier(trimmedLoginId) ? undefined : trimmedLoginId,
+          username: trimmedLoginId,
         }),
       },
     };
@@ -511,7 +510,7 @@ export async function loginSipWithCredentials(
     status: 401,
     message:
       webResult.message ??
-      "Your credentials do not have access to SIP. Use your SIP email and password.",
+      "Your credentials do not have access to SIP. Use your SIP email or phone and password.",
   };
 }
 
@@ -527,7 +526,7 @@ function hubLoginFailureStatus(upstreamStatus: number): number {
 
 /**
  * Hub login with per-system attempts and classified error messages.
- * Phone → iWaste, Corporate. Email → SIP, Corporate, iWaste.
+ * Phone → iWaste, Corporate, SIP. Email → SIP, Corporate, iWaste.
  */
 export async function loginWithCredentialsDetailed(
   identifier: string,
@@ -582,13 +581,12 @@ export async function loginWithCredentialsDetailed(
       return { ok: true, data: corporate, system: "corporate", attempts };
     }
 
-    attempts.push({
-      system: "sip",
-      ok: false,
-      status: 0,
-      message: "SIP sign-in requires an email address.",
-      reason: "skipped",
-    });
+    const sip = await tryLogin("sip", () =>
+      loginSipWithCredentials(trimmed, password)
+    );
+    if (sip) {
+      return { ok: true, data: sip, system: "sip", attempts };
+    }
   }
 
   const failure = buildHubLoginFailure(attempts);
@@ -602,7 +600,7 @@ export async function loginWithCredentialsDetailed(
 }
 
 /**
- * Hub login: phone → iWaste, then Corporate. Email → SIP, then Corporate, then iWaste.
+ * Hub login: phone → iWaste, Corporate, SIP. Email → SIP, Corporate, iWaste.
  */
 export async function loginWithCredentials(
   identifier: string,

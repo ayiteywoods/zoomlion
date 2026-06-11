@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { resolveSipEmail } from "@/lib/auth-credentials";
+import { resolveSipLoginId } from "@/lib/auth-credentials";
 import { createSipGatewaySession } from "@/lib/system-auth";
 import { getSystemLaunchConfig } from "@/lib/system-launch";
 import { attachSystemSessionCookie } from "@/lib/system-session-cookie";
@@ -37,21 +37,21 @@ export async function POST(request: Request) {
     const credentials = await readSystemLaunchCredentials(request);
     const { password } = credentials;
     redirectOnSuccess = credentials.redirectOnSuccess;
-    const email = resolveSipEmail({
+    const loginId = resolveSipLoginId({
       phone: credentials.phone,
       password: credentials.password,
       corporateLoginId: credentials.corporateLoginId,
       sipEmail: credentials.sipEmail,
     });
 
-    if (!email || !password) {
+    if (!loginId || !password) {
       return sipLaunchFailureResponse(
-        "SIP requires an email address. Sign in to the hub with the email and password you use for SIP, or add your SIP email to your hub profile.",
+        "SIP requires an email address or phone number. Sign in to the hub with the credentials you use for SIP.",
         redirectOnSuccess
       );
     }
 
-    const result = await createSipGatewaySession(email, password);
+    const result = await createSipGatewaySession(loginId, password);
 
     if (!result.ok) {
       return sipLaunchFailureResponse(
