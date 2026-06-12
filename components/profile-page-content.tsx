@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
@@ -12,6 +12,7 @@ import {
 } from "@heroicons/react/24/outline";
 import {
   extractUserFromPayload,
+  isNonFatalProfileMessage,
   normalizeAuthUser,
   type AuthUser,
 } from "@/lib/auth-api";
@@ -34,7 +35,6 @@ const PROFILE_FIELD_ORDER: { key: keyof AuthUser | string; label: string }[] =
     { key: "role", label: "Role" },
     { key: "company_name", label: "Company" },
     { key: "company", label: "Organization" },
-    { key: "id", label: "User ID" },
   ];
 
 const HIDDEN_PROFILE_KEYS = new Set([
@@ -48,6 +48,15 @@ const HIDDEN_PROFILE_KEYS = new Set([
   "updated_at",
   "deleted_at",
   "email_verified_at",
+  "id",
+  "user_id",
+  "otp",
+  "is_sso",
+  "password_reset",
+  "status",
+  "usercode",
+  "user_code",
+  "updated_by",
 ]);
 
 function formatValue(value: unknown): string {
@@ -77,7 +86,10 @@ function buildProfileRows(user: AuthUser) {
   }
 
   for (const [key, value] of Object.entries(user)) {
-    if (used.has(key) || HIDDEN_PROFILE_KEYS.has(key)) continue;
+    const normalizedKey = key.toLowerCase().replace(/[\s-]+/g, "_");
+    if (used.has(key) || HIDDEN_PROFILE_KEYS.has(key) || HIDDEN_PROFILE_KEYS.has(normalizedKey)) {
+      continue;
+    }
     if (key === "phone" && user.phone_no) continue;
     if (value === undefined || value === null || value === "") continue;
     if (typeof value === "object") continue;
@@ -102,8 +114,12 @@ export function ProfilePageContent() {
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const profileRequestIdRef = useRef(0);
 
   const loadProfile = useCallback(async () => {
+    const requestId = ++profileRequestIdRef.current;
+    const isLatestRequest = () => requestId === profileRequestIdRef.current;
+
     setLoading(true);
     setError(null);
 
@@ -141,13 +157,30 @@ export function ProfilePageContent() {
       const payload: unknown = await response.json().catch(() => null);
       const profileUser = extractUserFromPayload(payload);
 
+      if (!isLatestRequest()) return;
+
       if (profileUser) {
         persistAuthUser(profileUser);
         setUser(profileUser);
         touchAuthActivity();
+        setError(null);
       } else if (!response.ok) {
+        const message =
+          payload &&
+          typeof payload === "object" &&
+          "message" in payload &&
+          typeof (payload as { message: unknown }).message === "string"
+            ? (payload as { message: string }).message
+            : "Unable to load profile.";
+
+        const userToKeep = cached ?? getAuthUser();
+        if (userToKeep && isNonFatalProfileMessage(message)) {
+          setUser(userToKeep);
+          setError(null);
+          return;
+        }
+
         if (response.status === 401) {
-          const cached = getAuthUser();
           if (cached) {
             setUser(cached);
             setError(
@@ -159,22 +192,21 @@ export function ProfilePageContent() {
           return;
         }
 
-        const message =
-          payload &&
-          typeof payload === "object" &&
-          "message" in payload &&
-          typeof (payload as { message: unknown }).message === "string"
-            ? (payload as { message: string }).message
-            : "Unable to load profile.";
-
+        if (userToKeep) {
+          setUser(userToKeep);
+        }
         setError(message);
       } else if (payload && typeof payload === "object") {
         setUser(normalizeAuthUser(payload as Record<string, unknown>));
+        setError(null);
       }
     } catch {
+      if (!isLatestRequest()) return;
       setError("Network error. Please check your connection and try again.");
     } finally {
-      setLoading(false);
+      if (isLatestRequest()) {
+        setLoading(false);
+      }
     }
   }, [router]);
 

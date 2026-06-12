@@ -210,6 +210,12 @@ export function extractAuthUser(data: LoginSuccessResponse): AuthUser | null {
   return null;
 }
 
+/** iWaste may return this when the user exists but has no linked customer record. */
+export function isNonFatalProfileMessage(message: string): boolean {
+  const lower = message.toLowerCase();
+  return lower.includes("customer not found") || lower.includes("no customer");
+}
+
 export function getLoginErrorMessage(
   payload: unknown,
   fallback = "Unable to sign in. Please check your credentials."
@@ -264,6 +270,8 @@ async function fetchIwasteUserProfile(token: string): Promise<ProfileResult> {
         };
       }
 
+      const message = getLoginErrorMessage(payload, "Unable to load profile.");
+
       // Some profile responses include user data alongside a non-fatal message
       // (e.g. "Customer not found" when the user record exists but has no customer).
       if (user) {
@@ -276,7 +284,7 @@ async function fetchIwasteUserProfile(token: string): Promise<ProfileResult> {
       return {
         ok: false,
         status: response.status,
-        message: getLoginErrorMessage(payload, "Unable to load profile."),
+        message,
       };
     }
 
