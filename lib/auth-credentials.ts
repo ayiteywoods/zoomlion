@@ -12,14 +12,15 @@ export type StoredAuthCredentials = {
 export function resolveSipLoginId(
   credentials: StoredAuthCredentials
 ): string | null {
+  // Hub sign-in identifier (phone or email) — same value the user typed at login.
+  if (credentials.phone.trim()) {
+    return credentials.phone.trim();
+  }
   if (credentials.sipEmail?.trim()) {
     return credentials.sipEmail.trim();
   }
   if (credentials.corporateLoginId?.trim()) {
     return credentials.corporateLoginId.trim();
-  }
-  if (credentials.phone.trim()) {
-    return credentials.phone.trim();
   }
   return null;
 }

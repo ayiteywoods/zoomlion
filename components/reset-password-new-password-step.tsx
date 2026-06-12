@@ -113,8 +113,8 @@ export function ResetPasswordNewPasswordStep() {
         saveAuthCredentials(
           phone,
           password,
-          profileEmail ?? user?.phone_no?.trim() ?? phone,
-          profileEmail ?? (phone.includes("@") ? phone : undefined)
+          profileEmail ?? (phone.includes("@") ? phone : user?.phone_no?.trim() ?? phone),
+          phone.includes("@") ? phone : undefined
         );
         router.push("/dashboard");
         router.refresh();

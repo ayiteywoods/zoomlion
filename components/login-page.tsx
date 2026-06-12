@@ -422,8 +422,8 @@ export function LoginPage() {
       saveAuthCredentials(
         identifier,
         password,
-        profileEmail ?? user?.phone_no?.trim() ?? identifier,
-        profileEmail ?? (identifier.includes("@") ? identifier : undefined)
+        profileEmail ?? (identifier.includes("@") ? identifier : user?.phone_no?.trim() ?? identifier),
+        identifier.includes("@") ? identifier : undefined
       );
       router.push(redirectTo);
       router.refresh();

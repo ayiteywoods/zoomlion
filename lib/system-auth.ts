@@ -176,8 +176,8 @@ function resolveSipLoginIdForAccess(
   username: string,
   sipLoginOverride?: string
 ): string | null {
-  if (sipLoginOverride?.trim()) return sipLoginOverride.trim();
   if (username.trim()) return username.trim();
+  if (sipLoginOverride?.trim()) return sipLoginOverride.trim();
   return null;
 }
 

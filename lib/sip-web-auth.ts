@@ -26,18 +26,26 @@ export type SipWebLoginResult =
   | { ok: true; cookieHeader: string }
   | { ok: false; message?: string };
 
-export async function loginSipWebSession(
+function sipLoginIdCandidates(loginId: string): string[] {
+  const trimmed = loginId.trim();
+  if (!trimmed) return [];
+
+  const candidates = [trimmed];
+  if (!trimmed.includes("@")) {
+    const digits = trimmed.replace(/\D/g, "");
+    const local = digits.replace(/^233/, "").replace(/^0/, "");
+    if (local) {
+      candidates.push(`0${local}`, local, `233${local}`, `+233${local}`);
+    }
+  }
+
+  return [...new Set(candidates)];
+}
+
+async function attemptSipWebLogin(
   loginId: string,
   password: string
 ): Promise<SipWebLoginResult> {
-  const trimmedLoginId = loginId.trim();
-  if (!trimmedLoginId) {
-    return {
-      ok: false,
-      message: "SIP sign-in requires an email address or phone number.",
-    };
-  }
-
   const { html, jar } = await fetchLoginPage(SIP_LOGIN_URL, new Map());
   const csrf = extractCsrfToken(html);
 
@@ -47,7 +55,7 @@ export async function loginSipWebSession(
 
   const body = new URLSearchParams({
     _token: csrf,
-    email: trimmedLoginId,
+    email: loginId,
     password,
   });
 
@@ -64,8 +72,20 @@ export async function loginSipWebSession(
   });
 
   const authenticatedJar = mergeCookieJars(jar, parseSetCookies(loginResponse));
+  const loginLocation = loginResponse.headers.get("location") ?? "";
 
   if (loginResponse.status === 422 || loginResponse.status === 401) {
+    return {
+      ok: false,
+      message: "Your credentials do not have access to SIP.",
+    };
+  }
+
+  if (
+    loginResponse.status >= 300 &&
+    loginResponse.status < 400 &&
+    loginLocation.includes("/login")
+  ) {
     return {
       ok: false,
       message: "Your credentials do not have access to SIP.",
@@ -106,6 +126,34 @@ export async function loginSipWebSession(
   }
 
   return { ok: true, cookieHeader };
+}
+
+export async function loginSipWebSession(
+  loginId: string,
+  password: string
+): Promise<SipWebLoginResult> {
+  const candidates = sipLoginIdCandidates(loginId);
+  if (!candidates.length) {
+    return {
+      ok: false,
+      message: "SIP sign-in requires an email address or phone number.",
+    };
+  }
+
+  let lastFailure: SipWebLoginResult = {
+    ok: false,
+    message: "Your credentials do not have access to SIP.",
+  };
+
+  for (const candidate of candidates) {
+    const result = await attemptSipWebLogin(candidate, password);
+    if (result.ok) {
+      return result;
+    }
+    lastFailure = result;
+  }
+
+  return lastFailure;
 }
 
 export function rewriteSipGatewayHtml(
