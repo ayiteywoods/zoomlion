@@ -79,9 +79,9 @@ type FinishLaunchOptions = {
 };
 
 /**
- * Open the real system URL when the hub shares a parent domain with the system
- * (e.g. hub.adudor.com → iwaste.adudor.com). Otherwise use the hub gateway so
- * server-side SSO cookies keep automatic sign-in working.
+ * Use the hub gateway so server-side SSO cookies keep automatic sign-in working.
+ * Set OPEN_EXTERNAL_SYSTEM_URLS=true (and not USE_SYSTEM_GATEWAY=true) on a hub
+ * deployed on the same parent domain as the system to open real URLs instead.
  */
 export function finishSystemLaunch({
   request,
@@ -97,9 +97,12 @@ export function finishSystemLaunch({
 }: FinishLaunchOptions): NextResponse {
   const requestHost = new URL(request.url).hostname;
   const forceGateway = process.env.USE_SYSTEM_GATEWAY === "true";
-  const canShare = canShareCookiesWithUpstream(requestHost, upstreamOrigin);
+  const openDirect =
+    process.env.OPEN_EXTERNAL_SYSTEM_URLS === "true" &&
+    !forceGateway &&
+    canShareCookiesWithUpstream(requestHost, upstreamOrigin);
 
-  if (!forceGateway && canShare) {
+  if (openDirect) {
     const response = redirectAfterFormPost(dashboardUrl);
     attachUpstreamSessionCookies(
       response,
