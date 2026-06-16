@@ -1,6 +1,10 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { IWASTE_ORIGIN, mergeCookieHeader } from "@/lib/iwaste-web-auth";
+import {
+  buildUpstreamAccept,
+  shouldRedirectJsonAsHtml,
+} from "@/lib/external-system-launch";
 import { parseSetCookies } from "@/lib/system-auth-cookies";
 import { attachSystemSessionCookie } from "@/lib/system-session-cookie";
 import { getSystemLaunchConfig } from "@/lib/system-launch";
@@ -64,7 +68,7 @@ async function proxyIwasteRequest(request: Request, context: RouteContext) {
 
   const headers: Record<string, string> = {
     Cookie: session.cookieHeader,
-    Accept: request.headers.get("accept") ?? "*/*",
+    Accept: buildUpstreamAccept(request),
   };
 
   const contentType = request.headers.get("content-type");
@@ -100,6 +104,18 @@ async function proxyIwasteRequest(request: Request, context: RouteContext) {
   }
 
   const upstreamType = upstream.headers.get("content-type") ?? "application/octet-stream";
+
+  if (shouldRedirectJsonAsHtml(request, upstreamType)) {
+    const homePath = `/systems/gateway/iwaste/home${requestUrl.search}`;
+    const response = NextResponse.redirect(new URL(homePath, requestUrl.origin), 303);
+    attachSystemSessionCookie(
+      response,
+      IWASTE_SESSION_COOKIE,
+      updatedCookieHeader
+    );
+    return response;
+  }
+
   let body: ArrayBuffer | string = await upstream.arrayBuffer();
 
   if (upstreamType.includes("text/html")) {

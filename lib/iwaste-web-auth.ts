@@ -7,9 +7,9 @@ import {
   type CookieJar,
 } from "@/lib/system-auth-cookies";
 
-const IWASTE_ORIGIN = "https://iwaste.adudor.com";
+export const IWASTE_ORIGIN = "https://iwaste.adudor.com";
 const IWASTE_LOGIN_URL = `${IWASTE_ORIGIN}/login`;
-const IWASTE_HOME_URL = `${IWASTE_ORIGIN}/home`;
+export const IWASTE_HOME_URL = `${IWASTE_ORIGIN}/home`;
 
 export type IwasteWebLoginResult =
   | { ok: true; cookieHeader: string }
@@ -105,4 +105,3 @@ export function mergeCookieHeader(existing: string, incoming: CookieJar): string
   return cookieJarToHeader(jar);
 }
 
-export { IWASTE_ORIGIN };

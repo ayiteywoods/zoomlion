@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { buildSystemSessionBootstrapHtml } from "@/lib/system-session-bootstrap";
+import { CORPORATE_ORIGIN } from "@/lib/corporate-web-auth";
+import { finishSystemLaunch } from "@/lib/external-system-launch";
 import { createCorporateGatewaySession } from "@/lib/system-auth";
 import { getSystemLaunchConfig } from "@/lib/system-launch";
-import { attachSystemSessionCookie } from "@/lib/system-session-cookie";
 import {
   readSystemLaunchCredentials,
   redirectAfterFormPost,
@@ -52,47 +52,28 @@ export async function POST(request: Request) {
       );
     }
 
+    const entryUrl = new URL(result.entryPath || "/", CORPORATE_ORIGIN).toString();
     const gatewayPath = `/systems/gateway/corporate${result.entryPath}`;
 
     if (redirectOnSuccess) {
-      const response = new NextResponse(
-        buildSystemSessionBootstrapHtml(gatewayPath, corporateConfig.label),
-        {
-          status: 200,
-          headers: {
-            "Content-Type": "text/html; charset=utf-8",
-            "Cache-Control": "no-store",
-          },
-        }
-      );
-      attachSystemSessionCookie(
-        response,
-        CORPORATE_SESSION_COOKIE,
-        result.cookieHeader,
-        result.bearerToken,
-        false,
-        result.loginPhone,
-        result.loginPassword
-      );
-      return response;
+      return finishSystemLaunch({
+        request,
+        upstreamOrigin: CORPORATE_ORIGIN,
+        dashboardUrl: entryUrl,
+        gatewayPath,
+        cookieHeader: result.cookieHeader,
+        sessionCookieName: CORPORATE_SESSION_COOKIE,
+        bearerToken: result.bearerToken,
+        apiOnly: result.apiOnly,
+        loginPhone: result.loginPhone,
+        loginPassword: result.loginPassword,
+      });
     }
 
-    const gatewayUrl = new URL(gatewayPath, request.url);
-
-    const response = NextResponse.json({
+    return NextResponse.json({
       ok: true,
-      openUrl: gatewayUrl.pathname,
+      openUrl: gatewayPath,
     });
-    attachSystemSessionCookie(
-      response,
-      CORPORATE_SESSION_COOKIE,
-      result.cookieHeader,
-      result.bearerToken,
-      false,
-      result.loginPhone,
-      result.loginPassword
-    );
-    return response;
   } catch {
     return NextResponse.json(
       { ok: false, message: "Unable to start Corporate session." },

@@ -1,17 +1,17 @@
 import { NextResponse } from "next/server";
 import { resolveSipLoginId } from "@/lib/auth-credentials";
+import { finishSystemLaunch } from "@/lib/external-system-launch";
 import { createSipGatewaySession } from "@/lib/system-auth";
 import { getSystemLaunchConfig } from "@/lib/system-launch";
-import { attachSystemSessionCookie } from "@/lib/system-session-cookie";
 import { buildSystemSessionErrorHtml } from "@/lib/system-session-bootstrap";
 import {
   readSystemLaunchCredentials,
-  redirectAfterFormPost,
 } from "@/lib/system-session-request";
-import { SIP_GATEWAY_ENTRY } from "@/lib/sip-web-auth";
+import { SIP_ORIGIN } from "@/lib/sip-web-auth";
 import { SIP_SESSION_COOKIE } from "@/lib/system-session-store";
 
 const sipConfig = getSystemLaunchConfig("sip");
+const SIP_GATEWAY_HOME = "/systems/gateway/sip";
 
 function sipLaunchFailureResponse(
   message: string,
@@ -61,21 +61,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const openPath = SIP_GATEWAY_ENTRY;
-
     if (redirectOnSuccess) {
-      const response = redirectAfterFormPost(new URL(openPath, request.url));
-      attachSystemSessionCookie(
-        response,
-        SIP_SESSION_COOKIE,
-        result.cookieHeader
-      );
-      return response;
+      return finishSystemLaunch({
+        request,
+        upstreamOrigin: SIP_ORIGIN,
+        dashboardUrl: sipConfig.dashboardUrl,
+        gatewayPath: SIP_GATEWAY_HOME,
+        cookieHeader: result.cookieHeader,
+        sessionCookieName: SIP_SESSION_COOKIE,
+      });
     }
 
-    const response = NextResponse.json({ ok: true, openUrl: openPath });
-    attachSystemSessionCookie(response, SIP_SESSION_COOKIE, result.cookieHeader);
-    return response;
+    return NextResponse.json({
+      ok: true,
+      openUrl: SIP_GATEWAY_HOME,
+    });
   } catch {
     return sipLaunchFailureResponse(
       "Unable to start SIP session.",

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { finishSystemLaunch } from "@/lib/external-system-launch";
+import { IWASTE_ORIGIN } from "@/lib/iwaste-web-auth";
 import { createIwasteGatewaySession } from "@/lib/system-auth";
 import { getSystemLaunchConfig } from "@/lib/system-launch";
-import { attachSystemSessionCookie } from "@/lib/system-session-cookie";
 import { buildSystemSessionBootstrapHtml } from "@/lib/system-session-bootstrap";
 import {
   readSystemLaunchCredentials,
@@ -10,6 +11,7 @@ import {
 import { IWASTE_SESSION_COOKIE } from "@/lib/system-session-store";
 
 const iwasteConfig = getSystemLaunchConfig("iwaste");
+const IWASTE_GATEWAY_HOME = "/systems/gateway/iwaste/home";
 
 function redirectToIwasteLogin(redirectOnSuccess: boolean) {
   if (redirectOnSuccess) {
@@ -66,24 +68,21 @@ export async function POST(request: Request) {
       );
     }
 
-    const openPath = "/systems/gateway/iwaste/home";
-
     if (redirectOnSuccess) {
-      const response = redirectAfterFormPost(new URL(openPath, request.url));
-      attachSystemSessionCookie(
-        response,
-        IWASTE_SESSION_COOKIE,
-        result.cookieHeader
-      );
-      return response;
+      return finishSystemLaunch({
+        request,
+        upstreamOrigin: IWASTE_ORIGIN,
+        dashboardUrl: iwasteConfig.dashboardUrl,
+        gatewayPath: IWASTE_GATEWAY_HOME,
+        cookieHeader: result.cookieHeader,
+        sessionCookieName: IWASTE_SESSION_COOKIE,
+      });
     }
 
-    const response = NextResponse.json({ ok: true, openUrl: openPath });
-    attachSystemSessionCookie(
-      response,
-      IWASTE_SESSION_COOKIE,
-      result.cookieHeader
-    );
+    const response = NextResponse.json({
+      ok: true,
+      openUrl: IWASTE_GATEWAY_HOME,
+    });
     return response;
   } catch {
     if (redirectOnSuccess) {

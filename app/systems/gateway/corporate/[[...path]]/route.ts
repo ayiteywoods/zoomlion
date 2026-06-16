@@ -10,6 +10,10 @@ import {
   rewriteCorporateGatewayHtml,
 } from "@/lib/corporate-web-auth";
 import { buildCorporateApiShellHtml } from "@/lib/corporate-gateway-shell";
+import {
+  buildUpstreamAccept,
+  shouldRedirectJsonAsHtml,
+} from "@/lib/external-system-launch";
 import { attachSystemSessionCookie } from "@/lib/system-session-cookie";
 import { parseSetCookies } from "@/lib/system-auth-cookies";
 import { getSystemLaunchConfig } from "@/lib/system-launch";
@@ -165,7 +169,7 @@ async function proxyCorporateRequest(request: Request, context: RouteContext) {
   ).toString();
 
   const headers: Record<string, string> = {
-    Accept: request.headers.get("accept") ?? "*/*",
+    Accept: buildUpstreamAccept(request),
   };
 
   if (session.cookieHeader) {
@@ -280,6 +284,25 @@ async function proxyCorporateRequest(request: Request, context: RouteContext) {
 
   const upstreamType =
     upstream.headers.get("content-type") ?? "application/octet-stream";
+
+  if (shouldRedirectJsonAsHtml(request, upstreamType)) {
+    const homePath = `/systems/gateway/corporate/`;
+    const response = NextResponse.redirect(
+      new URL(homePath, requestUrl.origin),
+      303
+    );
+    attachSystemSessionCookie(
+      response,
+      CORPORATE_SESSION_COOKIE,
+      updatedCookieHeader,
+      session.bearerToken,
+      session.apiOnly,
+      session.loginPhone,
+      session.loginPassword
+    );
+    return response;
+  }
+
   let body: ArrayBuffer | string = await upstream.arrayBuffer();
 
   if (upstreamType.includes("text/html")) {
