@@ -495,7 +495,7 @@ export function LoginPage() {
                 </p>
                 {searchParams.get("reason") === "idle" && (
                   <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-center text-sm text-amber-900 dark:border-amber-800/60 dark:bg-amber-950/50 dark:text-amber-100">
-                    Your session expired after 6 hours of inactivity. Please sign
+                    Your session expired after 15 minutes of inactivity. Please sign
                     in again.
                   </p>
                 )}
