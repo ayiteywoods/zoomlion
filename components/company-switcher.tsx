@@ -10,8 +10,13 @@ import { useDashboard } from "@/components/dashboard-provider";
 import { organizations } from "@/lib/dashboard-data";
 
 export function CompanySwitcher({ compact = false }: { compact?: boolean }) {
-  const { organizationId, organizationName, organizationRegion, setOrganizationId, roleLabel } =
-    useDashboard();
+  const {
+    organizationId,
+    organizationName,
+    organizationRegion,
+    setOrganizationId,
+    userTypeLabel,
+  } = useDashboard();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -41,9 +46,9 @@ export function CompanySwitcher({ compact = false }: { compact?: boolean }) {
           <p className="truncate text-xs font-semibold text-white">
             {organizationName}
           </p>
-          {!compact && (
-            <p className="truncate text-[10px] text-on-brand-muted">{roleLabel}</p>
-          )}
+          {!compact && userTypeLabel ? (
+            <p className="truncate text-[10px] text-on-brand-muted">{userTypeLabel}</p>
+          ) : null}
         </div>
         <ChevronDownIcon
           className={`h-4 w-4 shrink-0 text-on-brand-muted transition-transform ${open ? "rotate-180" : ""}`}

@@ -27,6 +27,7 @@ import {
   AUTH_UPDATED_EVENT,
   getAuthCompanyName,
   getAuthUser,
+  getAuthUserType,
   getDisplayName,
   getLastLoginLabel,
   getSessionExpiresInLabel,
@@ -39,6 +40,7 @@ type DashboardContextValue = {
   authUser: AuthUser | null;
   role: UserRole;
   roleLabel: string;
+  userTypeLabel: string;
   organizationId: string;
   organizationName: string;
   organizationRegion: string;
@@ -276,12 +278,15 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const organizationName =
     getAuthCompanyName(authUser) ?? organization.name;
 
+  const userTypeLabel = getAuthUserType(authUser) ?? "";
+
   const value = useMemo<DashboardContextValue>(
     () => ({
       userName,
       authUser,
       role,
       roleLabel: roleLabels[role],
+      userTypeLabel,
       organizationId,
       organizationName,
       organizationRegion: organization.region,
@@ -307,6 +312,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       organization,
       authUser,
       organizationName,
+      userTypeLabel,
       userName,
       lastLogin,
       sessionExpiresIn,

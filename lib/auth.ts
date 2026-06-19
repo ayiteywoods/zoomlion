@@ -231,6 +231,14 @@ export function getDisplayName(user: AuthUser | null): string | null {
   return null;
 }
 
+export function getAuthUserType(user: AuthUser | null): string | null {
+  if (!user) return null;
+  if (typeof user.type === "string" && user.type.trim()) {
+    return user.type.trim().toUpperCase();
+  }
+  return null;
+}
+
 export function getAuthCompanyName(user: AuthUser | null): string | null {
   if (!user) return null;
   if (typeof user.company_name === "string" && user.company_name.trim()) {

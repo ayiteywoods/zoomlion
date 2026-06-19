@@ -60,6 +60,7 @@ export type AuthUser = {
   phone_no?: string;
   email?: string;
   role?: string;
+  type?: string;
   company?: string;
   company_name?: string;
   /** iWaste: "N" = must reset password, "Y" = already reset */
@@ -138,6 +139,7 @@ export function normalizeAuthUser(raw: Record<string, unknown>): AuthUser {
     phone_no: pickString(raw, "phone_no", "phone", "phone_number", "mobile"),
     email: pickString(raw, "email"),
     role: pickString(raw, "role", "user_role", "position"),
+    type: pickString(raw, "type", "user_type"),
     company: pickString(raw, "company", "company_name", "organization"),
     company_name: pickString(raw, "company_name", "company", "organization"),
   };

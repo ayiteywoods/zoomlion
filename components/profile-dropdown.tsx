@@ -23,9 +23,7 @@ export function ProfileDropdown() {
   const router = useRouter();
   const {
     userName,
-    roleLabel,
-    organizationName,
-    sessionExpiresIn,
+    userTypeLabel,
     setSettingsOpen,
     setShortcutsOpen,
   } = useDashboard();
@@ -81,12 +79,9 @@ export function ProfileDropdown() {
         >
           <div className="border-b border-line px-4 py-3">
             <p className="text-sm font-semibold text-primary">{userName}</p>
-            <p className="mt-0.5 text-sm text-muted">
-              {roleLabel} · {organizationName}
-            </p>
-            <p className="mt-1 text-[10px] text-muted">
-              Session expires in {sessionExpiresIn}
-            </p>
+            {userTypeLabel ? (
+              <p className="mt-0.5 text-xs text-muted">{userTypeLabel}</p>
+            ) : null}
           </div>
 
           <div className="py-1">
