@@ -175,7 +175,7 @@ export function rewriteSipGatewayHtml(
   out = injectGatewayNavigation(out, gatewayPath, {
     "/dashboard": "",
     "/home": "",
-  });
+  }, SIP_ORIGIN);
   return out;
 }
 

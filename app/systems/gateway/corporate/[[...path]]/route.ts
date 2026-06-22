@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import {
   CORPORATE_ORIGIN,
+  buildCorporateProxyRequestHeaders,
   discoverCorporateAuthenticatedPath,
   isCorporateLoginGetPath,
   isCorporateLoginPageHtml,
@@ -168,19 +169,12 @@ async function proxyCorporateRequest(request: Request, context: RouteContext) {
     requestUrl.origin
   ).toString();
 
-  const headers: Record<string, string> = {
-    Accept: buildUpstreamAccept(request),
-  };
-
-  if (session.cookieHeader) {
-    headers.Cookie = session.cookieHeader;
-  }
-  if (session.bearerToken) {
-    headers.Authorization = `Bearer ${session.bearerToken}`;
-  }
-
-  const contentType = request.headers.get("content-type");
-  if (contentType) headers["Content-Type"] = contentType;
+  const headers = buildCorporateProxyRequestHeaders(
+    request,
+    session.cookieHeader,
+    session.bearerToken
+  );
+  headers.Accept = buildUpstreamAccept(request);
 
   const init: RequestInit = {
     method: request.method,

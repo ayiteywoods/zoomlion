@@ -77,7 +77,7 @@ export function injectCorporateGatewayNavigation(
   html: string,
   gatewayPathPrefix: string
 ): string {
-  return injectGatewayNavigation(html, gatewayPathPrefix);
+  return injectGatewayNavigation(html, gatewayPathPrefix, {}, CORPORATE_ORIGIN);
 }
 
 export function rewriteCorporateGatewayHtml(
@@ -658,4 +658,38 @@ export function mergeCorporateCookieHeader(
   }
 
   return cookieJarToHeader(jar);
+}
+
+export function buildCorporateProxyRequestHeaders(
+  request: Request,
+  cookieHeader: string,
+  bearerToken?: string
+): Record<string, string> {
+  const jar = cookieHeaderToJar(cookieHeader);
+  const headers = corporateFetchHeaders(jar, {
+    Accept: request.headers.get("accept") ?? "*/*",
+  });
+
+  const clientXsrf =
+    request.headers.get("x-xsrf-token") ??
+    request.headers.get("X-XSRF-TOKEN");
+  if (clientXsrf) {
+    headers["X-XSRF-TOKEN"] = clientXsrf;
+  }
+
+  const requestedWith = request.headers.get("x-requested-with");
+  if (requestedWith) {
+    headers["X-Requested-With"] = requestedWith;
+  }
+
+  if (bearerToken) {
+    headers.Authorization = `Bearer ${bearerToken}`;
+  }
+
+  const contentType = request.headers.get("content-type");
+  if (contentType) {
+    headers["Content-Type"] = contentType;
+  }
+
+  return headers;
 }

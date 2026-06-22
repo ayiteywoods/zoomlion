@@ -1,14 +1,16 @@
-/** Keep in-app links under the gateway (avoids hub route collisions e.g. /dashboard, /profile). */
+/** Keep in-app links and AJAX under the gateway (avoids hub route collisions). */
 export function injectGatewayNavigation(
   html: string,
   gatewayPathPrefix: string,
-  pathAliases: Record<string, string> = {}
+  pathAliases: Record<string, string> = {},
+  upstreamOrigin = ""
 ): string {
   const script = `<script>
 (function () {
   var GATEWAY = ${JSON.stringify(gatewayPathPrefix.replace(/\/+$/, ""))};
+  var UPSTREAM = ${JSON.stringify(upstreamOrigin.replace(/\/+$/, ""))};
   var ALIASES = ${JSON.stringify(pathAliases)};
-  var HUB_PREFIXES = ["/_next/", "/api/auth/"];
+  var HUB_PREFIXES = ["/_next/", "/api/auth/", "/api/systems/"];
 
   function shouldRewrite(pathname) {
     if (!pathname || pathname.charAt(0) !== "/") return false;
@@ -29,11 +31,25 @@ export function injectGatewayNavigation(
     return GATEWAY + pathname;
   }
 
+  function rewritePathname(pathname) {
+    if (!shouldRewrite(pathname)) return null;
+    var nextPath = toGatewayPath(pathname);
+    if (nextPath === pathname) return null;
+    return nextPath;
+  }
+
   function rewriteUrl(url) {
-    if (!url || url.origin !== location.origin) return null;
-    if (!shouldRewrite(url.pathname)) return null;
-    var nextPath = toGatewayPath(url.pathname);
-    if (nextPath === url.pathname) return null;
+    if (!url) return null;
+
+    if (UPSTREAM && url.origin === UPSTREAM) {
+      var upstreamPath = rewritePathname(url.pathname);
+      if (upstreamPath) return upstreamPath + url.search + url.hash;
+      return null;
+    }
+
+    if (url.origin !== location.origin) return null;
+    var nextPath = rewritePathname(url.pathname);
+    if (!nextPath) return null;
     return nextPath + url.search + url.hash;
   }
 
@@ -52,6 +68,39 @@ export function injectGatewayNavigation(
     } catch (e) {
       return null;
     }
+  }
+
+  function patchFetchInput(input) {
+    if (typeof input === "string") {
+      var next = rewriteRawHref(input);
+      return next || input;
+    }
+    if (input && typeof input === "object" && typeof input.url === "string") {
+      var rewritten = rewriteRawHref(input.url);
+      if (rewritten && rewritten !== input.url) {
+        return new Request(rewritten, input);
+      }
+    }
+    return input;
+  }
+
+  if (typeof window.fetch === "function") {
+    var nativeFetch = window.fetch;
+    window.fetch = function (input, init) {
+      return nativeFetch.call(this, patchFetchInput(input), init);
+    };
+  }
+
+  if (typeof XMLHttpRequest !== "undefined") {
+    var nativeOpen = XMLHttpRequest.prototype.open;
+    XMLHttpRequest.prototype.open = function (method, url) {
+      var args = Array.prototype.slice.call(arguments);
+      if (typeof url === "string") {
+        var next = rewriteRawHref(url);
+        if (next) args[1] = next;
+      }
+      return nativeOpen.apply(this, args);
+    };
   }
 
   function patchElement(el) {
@@ -162,6 +211,9 @@ export function injectGatewayNavigation(
 })();
 </script>`;
 
+  if (html.includes("<head>")) {
+    return html.replace("<head>", `<head>${script}`);
+  }
   if (html.includes("</body>")) {
     return html.replace("</body>", `${script}</body>`);
   }
