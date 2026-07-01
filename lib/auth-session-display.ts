@@ -1,5 +1,5 @@
 const DAY_MS = 24 * 60 * 60 * 1000;
-const DEFAULT_IDLE_MS = 15 * 60 * 1000;
+const DEFAULT_IDLE_MS = 60 * 60 * 1000;
 
 function startOfLocalDay(ms: number): number {
   const date = new Date(ms);

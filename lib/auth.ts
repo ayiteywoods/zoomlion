@@ -25,8 +25,8 @@ export const AUTH_REMEMBER_COOKIE = "zl-auth-remember";
 /** Set only after a successful hub login (server or client). */
 export const HUB_SESSION_COOKIE = "zl-hub-session";
 
-/** Session expires after 15 minutes without user activity */
-export const AUTH_IDLE_MS = 15 * 60 * 1000;
+/** Session expires after 60 minutes without user activity */
+export const AUTH_IDLE_MS = 60 * 60 * 1000;
 export const REMEMBER_COOKIE_MAX_AGE = 60 * 60 * 24 * 30;
 
 export type AuthSession = {
