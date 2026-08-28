@@ -64,11 +64,36 @@ export function injectGatewayNavigation(
       return null;
     }
     try {
+      if (raw.indexOf("//") === 0) {
+        return rewriteUrl(new URL("https:" + raw));
+      }
       return rewriteUrl(new URL(raw, location.href));
     } catch (e) {
       return null;
     }
   }
+
+  function installJqueryHook() {
+    var jq = window.jQuery || window.$;
+    if (!jq) return false;
+    if (jq.__gatewayPatched) return true;
+    jq.ajaxPrefilter(function (options) {
+      if (options && typeof options.url === "string") {
+        var next = rewriteRawHref(options.url);
+        if (next) options.url = next;
+      }
+    });
+    jq.__gatewayPatched = true;
+    return true;
+  }
+
+  installJqueryHook();
+  var jqTimer = window.setInterval(function () {
+    if (installJqueryHook()) window.clearInterval(jqTimer);
+  }, 50);
+  window.setTimeout(function () {
+    window.clearInterval(jqTimer);
+  }, 15000);
 
   function patchFetchInput(input) {
     if (typeof input === "string") {

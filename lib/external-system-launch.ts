@@ -130,6 +130,17 @@ export function isDocumentNavigation(request: Request): boolean {
   const accept = request.headers.get("accept") ?? "";
   const secFetchDest = request.headers.get("sec-fetch-dest") ?? "";
   const secFetchMode = request.headers.get("sec-fetch-mode") ?? "";
+  const requestedWith = request.headers.get("x-requested-with") ?? "";
+
+  if (requestedWith.toLowerCase() === "xmlhttprequest") return false;
+  if (secFetchMode === "cors" || secFetchMode === "no-cors") return false;
+  if (
+    secFetchDest &&
+    secFetchDest !== "document" &&
+    secFetchDest !== "iframe"
+  ) {
+    return false;
+  }
 
   return (
     secFetchDest === "document" ||

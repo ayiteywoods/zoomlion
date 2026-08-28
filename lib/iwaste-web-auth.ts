@@ -1,4 +1,8 @@
 import {
+  rewriteGatewayBaseHref,
+} from "@/lib/gateway-route-methods";
+import { injectGatewayNavigation } from "@/lib/gateway-navigation-inject";
+import {
   cookieJarToHeader,
   extractCsrfToken,
   fetchLoginPage,
@@ -6,6 +10,8 @@ import {
   parseSetCookies,
   type CookieJar,
 } from "@/lib/system-auth-cookies";
+
+const IWASTE_GATEWAY_PATH = "/systems/gateway/iwaste";
 
 export const IWASTE_ORIGIN = "https://iwaste.adudor.com";
 const IWASTE_LOGIN_URL = `${IWASTE_ORIGIN}/login`;
@@ -85,6 +91,24 @@ export async function loginIwasteWebSession(
   }
 
   return { ok: true, cookieHeader };
+}
+
+export function rewriteIwasteGatewayHtml(
+  html: string,
+  gatewayPrefix: string
+): string {
+  const prefix = gatewayPrefix.replace(/\/$/, "");
+  const gatewayPath =
+    new URL(prefix, "http://local").pathname || IWASTE_GATEWAY_PATH;
+
+  let out = html
+    .replaceAll(IWASTE_ORIGIN, prefix)
+    .replace(/href="\/(?!\/)/g, `href="${prefix}/`)
+    .replace(/action="\/(?!\/)/g, `action="${prefix}/`);
+
+  out = rewriteGatewayBaseHref(out, prefix, IWASTE_ORIGIN);
+  out = injectGatewayNavigation(out, gatewayPath, {}, IWASTE_ORIGIN);
+  return out;
 }
 
 export function mergeCookieHeader(existing: string, incoming: CookieJar): string {

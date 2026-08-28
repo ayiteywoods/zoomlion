@@ -8,6 +8,7 @@ import {
   type CookieJar,
 } from "@/lib/system-auth-cookies";
 import { CORPORATE_GATEWAY_PATH } from "@/lib/corporate-gateway-middleware";
+import { rewriteGatewayBaseHref } from "@/lib/gateway-route-methods";
 import { injectGatewayNavigation } from "@/lib/gateway-navigation-inject";
 
 export const CORPORATE_ORIGIN = "https://corporate.adudor.com";
@@ -124,6 +125,7 @@ export function rewriteCorporateGatewayHtml(
   out = out.replace(new RegExp(`href="${prefix}/login/?"`, "gi"), `href="${prefix}"`);
   out = out.replace(new RegExp(`href='${prefix}/login/?'`, "gi"), `href='${prefix}'`);
 
+  out = rewriteGatewayBaseHref(out, prefix, CORPORATE_ORIGIN);
   out = injectCorporateGatewayNavigation(out, gatewayPath);
 
   if (loginPhone) {

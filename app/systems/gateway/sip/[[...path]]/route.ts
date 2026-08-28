@@ -10,6 +10,7 @@ import {
   buildUpstreamAccept,
   shouldRedirectJsonAsHtml,
 } from "@/lib/external-system-launch";
+import { gatewayRouteMethods } from "@/lib/gateway-route-methods";
 import { parseSetCookies } from "@/lib/system-auth-cookies";
 import { attachSystemSessionCookie } from "@/lib/system-session-cookie";
 import { SIP_GATEWAY_PATH } from "@/lib/sip-gateway-middleware";
@@ -226,10 +227,5 @@ async function proxySipRequest(request: Request, context: RouteContext) {
   return response;
 }
 
-export async function GET(request: Request, context: RouteContext) {
-  return proxySipRequest(request, context);
-}
-
-export async function POST(request: Request, context: RouteContext) {
-  return proxySipRequest(request, context);
-}
+export const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
+  gatewayRouteMethods(proxySipRequest);

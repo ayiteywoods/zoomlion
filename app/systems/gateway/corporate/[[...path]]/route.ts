@@ -15,6 +15,7 @@ import {
   buildUpstreamAccept,
   shouldRedirectJsonAsHtml,
 } from "@/lib/external-system-launch";
+import { gatewayRouteMethods } from "@/lib/gateway-route-methods";
 import { attachSystemSessionCookie } from "@/lib/system-session-cookie";
 import { parseSetCookies } from "@/lib/system-auth-cookies";
 import { getSystemLaunchConfig } from "@/lib/system-launch";
@@ -379,10 +380,5 @@ async function proxyCorporateRequest(request: Request, context: RouteContext) {
   return response;
 }
 
-export async function GET(request: Request, context: RouteContext) {
-  return proxyCorporateRequest(request, context);
-}
-
-export async function POST(request: Request, context: RouteContext) {
-  return proxyCorporateRequest(request, context);
-}
+export const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
+  gatewayRouteMethods(proxyCorporateRequest);

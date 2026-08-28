@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { IWASTE_ORIGIN, mergeCookieHeader } from "@/lib/iwaste-web-auth";
+import { IWASTE_ORIGIN, mergeCookieHeader, rewriteIwasteGatewayHtml } from "@/lib/iwaste-web-auth";
+import { gatewayRouteMethods } from "@/lib/gateway-route-methods";
 import {
   buildUpstreamAccept,
   shouldRedirectJsonAsHtml,
@@ -34,10 +35,7 @@ function rewriteLocation(location: string | null, requestUrl: URL): string | nul
 }
 
 function rewriteHtml(html: string, gatewayPrefix: string): string {
-  return html
-    .replaceAll(IWASTE_ORIGIN, gatewayPrefix)
-    .replace(/href="\/(?!\/)/g, `href="${gatewayPrefix}/`)
-    .replace(/action="\/(?!\/)/g, `action="${gatewayPrefix}/`);
+  return rewriteIwasteGatewayHtml(html, gatewayPrefix);
 }
 
 async function proxyIwasteRequest(request: Request, context: RouteContext) {
@@ -139,10 +137,5 @@ async function proxyIwasteRequest(request: Request, context: RouteContext) {
   return response;
 }
 
-export async function GET(request: Request, context: RouteContext) {
-  return proxyIwasteRequest(request, context);
-}
-
-export async function POST(request: Request, context: RouteContext) {
-  return proxyIwasteRequest(request, context);
-}
+export const { GET, POST, PUT, PATCH, DELETE, HEAD, OPTIONS } =
+  gatewayRouteMethods(proxyIwasteRequest);
