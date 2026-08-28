@@ -16,7 +16,11 @@ import { clearAuthentication } from "@/lib/auth";
 
 const menuItems = [
   { label: "Profile", href: "/profile", icon: UserIcon },
-  { label: "Help & documentation", href: "#", icon: QuestionMarkCircleIcon },
+  {
+    label: "Help Desk",
+    href: "https://helpdesk.nerasolgh.com/zoomlion/tickets",
+    icon: QuestionMarkCircleIcon,
+  },
 ] as const;
 
 export function ProfileDropdown() {
@@ -91,6 +95,9 @@ export function ProfileDropdown() {
                 href={href}
                 role="menuitem"
                 onClick={() => setOpen(false)}
+                {...(href.startsWith("http")
+                  ? { target: "_blank", rel: "noopener noreferrer" }
+                  : {})}
                 className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-primary transition-colors hover:bg-primary-soft"
               >
                 <Icon className="h-5 w-5 shrink-0" />
