@@ -11,6 +11,7 @@ import {
   shouldRedirectJsonAsHtml,
 } from "@/lib/external-system-launch";
 import { gatewayRouteMethods } from "@/lib/gateway-route-methods";
+import { getPublicOrigin, getPublicRequestUrl } from "@/lib/public-request-url";
 import { parseSetCookies } from "@/lib/system-auth-cookies";
 import { attachSystemSessionCookie } from "@/lib/system-session-cookie";
 import { SIP_GATEWAY_PATH } from "@/lib/sip-gateway-middleware";
@@ -22,8 +23,8 @@ import {
   getSystemSession,
 } from "@/lib/system-session-store";
 
-function redirectToHubLogin(requestUrl: URL) {
-  const response = NextResponse.redirect(new URL("/login", requestUrl.origin), 303);
+function redirectToHubLogin(publicOrigin: string) {
+  const response = NextResponse.redirect(new URL("/login", publicOrigin), 303);
   for (const name of [SIP_SESSION_COOKIE, SIP_BROWSING_COOKIE] as const) {
     response.cookies.set(name, "", {
       httpOnly: true,
@@ -42,7 +43,7 @@ type RouteContext = {
   params: Promise<{ path?: string[] }>;
 };
 
-function rewriteLocation(location: string | null, requestUrl: URL): string | null {
+function rewriteLocation(location: string | null, publicOrigin: string): string | null {
   if (!location) return null;
 
   try {
@@ -57,7 +58,7 @@ function rewriteLocation(location: string | null, requestUrl: URL): string | nul
     const loginPath =
       relativePath === "/login" || relativePath.startsWith("/login/");
     if (loginPath) {
-      return new URL("/login", requestUrl.origin).toString();
+      return new URL("/login", publicOrigin).toString();
     }
 
     const normalized =
@@ -67,24 +68,25 @@ function rewriteLocation(location: string | null, requestUrl: URL): string | nul
         ? ""
         : relativePath;
     const gatewayPath = `${SIP_GATEWAY_PATH}${normalized}${target.search}`;
-    return new URL(gatewayPath, requestUrl.origin).toString();
+    return new URL(gatewayPath, publicOrigin).toString();
   } catch {
     return location;
   }
 }
 
 async function proxySipRequest(request: Request, context: RouteContext) {
-  const requestUrl = new URL(request.url);
+  const requestUrl = getPublicRequestUrl(request);
+  const publicOrigin = getPublicOrigin(request);
   const cookieStore = await cookies();
   const sealed = cookieStore.get(SIP_SESSION_COOKIE)?.value;
 
   if (!sealed) {
-    return redirectToHubLogin(requestUrl);
+    return redirectToHubLogin(publicOrigin);
   }
 
   const session = getSystemSession(sealed);
   if (!session) {
-    return redirectToHubLogin(requestUrl);
+    return redirectToHubLogin(publicOrigin);
   }
 
   const { path = [] } = await context.params;
@@ -94,11 +96,11 @@ async function proxySipRequest(request: Request, context: RouteContext) {
     targetPath === "login" ||
     targetPath.startsWith("login/")
   ) {
-    return redirectToHubLogin(requestUrl);
+    return redirectToHubLogin(publicOrigin);
   }
 
   if (path.length === 1 && (path[0] === "home" || path[0] === "dashboard")) {
-    const redirectUrl = new URL(SIP_GATEWAY_PATH, requestUrl.origin);
+    const redirectUrl = new URL(SIP_GATEWAY_PATH, publicOrigin);
     redirectUrl.search = requestUrl.search;
     return NextResponse.redirect(redirectUrl, 302);
   }
@@ -106,7 +108,7 @@ async function proxySipRequest(request: Request, context: RouteContext) {
   const targetUrl = targetPath
     ? `${SIP_ORIGIN}/${targetPath}${requestUrl.search}`
     : `${SIP_ORIGIN}/${requestUrl.search}`;
-  const gatewayPrefix = new URL("/systems/gateway/sip", requestUrl.origin).toString();
+  const gatewayPrefix = new URL("/systems/gateway/sip", publicOrigin).toString();
 
   const headers: Record<string, string> = {
     Cookie: session.cookieHeader,
@@ -154,7 +156,7 @@ async function proxySipRequest(request: Request, context: RouteContext) {
         targetPath === "home" ||
         targetPath === "profile")
     ) {
-      const redirectUrl = new URL(SIP_GATEWAY_PATH, requestUrl.origin);
+      const redirectUrl = new URL(SIP_GATEWAY_PATH, publicOrigin);
       redirectUrl.search = requestUrl.search;
       const response = NextResponse.redirect(redirectUrl, 302);
       attachSystemSessionCookie(
@@ -167,16 +169,19 @@ async function proxySipRequest(request: Request, context: RouteContext) {
   }
 
   if (upstream.status >= 300 && upstream.status < 400) {
-    const location = rewriteLocation(upstream.headers.get("location"), requestUrl);
+    const location = rewriteLocation(
+      upstream.headers.get("location"),
+      publicOrigin
+    );
     const redirectTarget =
       location ?? upstream.headers.get("location");
     if (redirectTarget) {
-      const redirectUrl = new URL(redirectTarget, requestUrl.origin);
+      const redirectUrl = new URL(redirectTarget, publicOrigin);
       if (
-        redirectUrl.origin !== requestUrl.origin ||
+        redirectUrl.origin !== publicOrigin ||
         redirectUrl.pathname === "/login"
       ) {
-        return redirectToHubLogin(requestUrl);
+        return redirectToHubLogin(publicOrigin);
       }
       const response = NextResponse.redirect(redirectUrl, upstream.status);
       attachSystemSessionCookie(
@@ -186,14 +191,14 @@ async function proxySipRequest(request: Request, context: RouteContext) {
       );
       return response;
     }
-    return redirectToHubLogin(requestUrl);
+    return redirectToHubLogin(publicOrigin);
   }
 
   const upstreamType =
     upstream.headers.get("content-type") ?? "application/octet-stream";
 
   if (shouldRedirectJsonAsHtml(request, upstreamType)) {
-    const redirectUrl = new URL(SIP_GATEWAY_PATH, requestUrl.origin);
+    const redirectUrl = new URL(SIP_GATEWAY_PATH, publicOrigin);
     redirectUrl.search = requestUrl.search;
     const response = NextResponse.redirect(redirectUrl, 303);
     attachSystemSessionCookie(
@@ -209,7 +214,7 @@ async function proxySipRequest(request: Request, context: RouteContext) {
   if (upstreamType.includes("text/html")) {
     const html = new TextDecoder().decode(body);
     if (isSipLoginPageHtml(html)) {
-      return redirectToHubLogin(requestUrl);
+      return redirectToHubLogin(publicOrigin);
     }
     body = rewriteSipGatewayHtml(html, gatewayPrefix);
   }

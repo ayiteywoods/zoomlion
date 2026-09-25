@@ -6,6 +6,7 @@ import {
   buildUpstreamAccept,
   shouldRedirectJsonAsHtml,
 } from "@/lib/external-system-launch";
+import { getPublicOrigin, getPublicRequestUrl } from "@/lib/public-request-url";
 import { parseSetCookies } from "@/lib/system-auth-cookies";
 import { attachSystemSessionCookie } from "@/lib/system-session-cookie";
 import { getSystemLaunchConfig } from "@/lib/system-launch";
@@ -20,7 +21,10 @@ type RouteContext = {
   params: Promise<{ path?: string[] }>;
 };
 
-function rewriteLocation(location: string | null, requestUrl: URL): string | null {
+function rewriteLocation(
+  location: string | null,
+  publicOrigin: string
+): string | null {
   if (!location) return null;
 
   try {
@@ -28,7 +32,7 @@ function rewriteLocation(location: string | null, requestUrl: URL): string | nul
     if (target.origin !== IWASTE_ORIGIN) return location;
 
     const gatewayPath = `/systems/gateway/iwaste${target.pathname}${target.search}`;
-    return new URL(gatewayPath, requestUrl.origin).toString();
+    return new URL(gatewayPath, publicOrigin).toString();
   } catch {
     return location;
   }
@@ -59,10 +63,14 @@ async function proxyIwasteRequest(request: Request, context: RouteContext) {
   }
 
   const { path = ["home"] } = await context.params;
-  const requestUrl = new URL(request.url);
+  const requestUrl = getPublicRequestUrl(request);
+  const publicOrigin = getPublicOrigin(request);
   const targetPath = path.join("/");
   const targetUrl = `${IWASTE_ORIGIN}/${targetPath}${requestUrl.search}`;
-  const gatewayPrefix = new URL("/systems/gateway/iwaste", requestUrl.origin).toString();
+  const gatewayPrefix = new URL(
+    "/systems/gateway/iwaste",
+    publicOrigin
+  ).toString();
 
   const headers: Record<string, string> = {
     Cookie: session.cookieHeader,
@@ -89,7 +97,10 @@ async function proxyIwasteRequest(request: Request, context: RouteContext) {
   );
 
   if (upstream.status >= 300 && upstream.status < 400) {
-    const location = rewriteLocation(upstream.headers.get("location"), requestUrl);
+    const location = rewriteLocation(
+      upstream.headers.get("location"),
+      publicOrigin
+    );
     if (location) {
       const response = NextResponse.redirect(location, upstream.status);
       attachSystemSessionCookie(
@@ -105,7 +116,7 @@ async function proxyIwasteRequest(request: Request, context: RouteContext) {
 
   if (shouldRedirectJsonAsHtml(request, upstreamType)) {
     const homePath = `/systems/gateway/iwaste/home${requestUrl.search}`;
-    const response = NextResponse.redirect(new URL(homePath, requestUrl.origin), 303);
+    const response = NextResponse.redirect(new URL(homePath, publicOrigin), 303);
     attachSystemSessionCookie(
       response,
       IWASTE_SESSION_COOKIE,

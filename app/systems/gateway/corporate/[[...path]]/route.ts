@@ -16,6 +16,7 @@ import {
   shouldRedirectJsonAsHtml,
 } from "@/lib/external-system-launch";
 import { gatewayRouteMethods } from "@/lib/gateway-route-methods";
+import { getPublicOrigin, getPublicRequestUrl } from "@/lib/public-request-url";
 import { attachSystemSessionCookie } from "@/lib/system-session-cookie";
 import { parseSetCookies } from "@/lib/system-auth-cookies";
 import { getSystemLaunchConfig } from "@/lib/system-launch";
@@ -31,7 +32,7 @@ type RouteContext = {
   params: Promise<{ path?: string[] }>;
 };
 
-function rewriteLocation(location: string | null, requestUrl: URL): string | null {
+function rewriteLocation(location: string | null, publicOrigin: string): string | null {
   if (!location) return null;
 
   try {
@@ -40,7 +41,7 @@ function rewriteLocation(location: string | null, requestUrl: URL): string | nul
 
     const pathname = target.pathname === "/" ? "" : target.pathname;
     const gatewayPath = `/systems/gateway/corporate${pathname}${target.search}`;
-    return new URL(gatewayPath, requestUrl.origin).toString();
+    return new URL(gatewayPath, publicOrigin).toString();
   } catch {
     return location;
   }
@@ -103,7 +104,8 @@ async function proxyCorporateRequest(request: Request, context: RouteContext) {
   const cookieStore = await cookies();
   const sealed = cookieStore.get(CORPORATE_SESSION_COOKIE)?.value;
 
-  const requestUrl = new URL(request.url);
+  const requestUrl = getPublicRequestUrl(request);
+  const publicOrigin = getPublicOrigin(request);
 
   if (!sealed) {
     return redirectToCorporateLogin();
@@ -138,7 +140,7 @@ async function proxyCorporateRequest(request: Request, context: RouteContext) {
     if (retried.ok) {
       const retryPath = `/systems/gateway/corporate${retried.entryPath}`;
       const response = NextResponse.redirect(
-        new URL(retryPath, request.url),
+        new URL(retryPath, publicOrigin),
         303
       );
       attachSystemSessionCookie(
@@ -156,7 +158,7 @@ async function proxyCorporateRequest(request: Request, context: RouteContext) {
 
   if (request.method === "GET" && isCorporateLoginGetPath(targetPath)) {
     return NextResponse.redirect(
-      new URL("/systems/gateway/corporate", request.url),
+      new URL("/systems/gateway/corporate", publicOrigin),
       303
     );
   }
@@ -167,7 +169,7 @@ async function proxyCorporateRequest(request: Request, context: RouteContext) {
 
   const gatewayPrefix = new URL(
     "/systems/gateway/corporate",
-    requestUrl.origin
+    publicOrigin
   ).toString();
 
   const headers = buildCorporateProxyRequestHeaders(
@@ -206,7 +208,7 @@ async function proxyCorporateRequest(request: Request, context: RouteContext) {
 
   if (upstream.status === 405 && request.method === "GET") {
     const response = NextResponse.redirect(
-      new URL("/systems/gateway/corporate", request.url)
+      new URL("/systems/gateway/corporate", publicOrigin)
     );
     attachSystemSessionCookie(
       response,
@@ -231,7 +233,7 @@ async function proxyCorporateRequest(request: Request, context: RouteContext) {
         });
         if (discovered !== null) {
           const response = NextResponse.redirect(
-            new URL(`/systems/gateway/corporate${discovered}`, request.url),
+            new URL(`/systems/gateway/corporate${discovered}`, publicOrigin),
             303
           );
           attachSystemSessionCookie(
@@ -261,7 +263,7 @@ async function proxyCorporateRequest(request: Request, context: RouteContext) {
       return response;
     }
 
-    const location = rewriteLocation(rawLocation, requestUrl);
+    const location = rewriteLocation(rawLocation, publicOrigin);
     if (location) {
       const response = NextResponse.redirect(location, 303);
       attachSystemSessionCookie(
@@ -283,7 +285,7 @@ async function proxyCorporateRequest(request: Request, context: RouteContext) {
   if (shouldRedirectJsonAsHtml(request, upstreamType)) {
     const homePath = `/systems/gateway/corporate/`;
     const response = NextResponse.redirect(
-      new URL(homePath, requestUrl.origin),
+      new URL(homePath, publicOrigin),
       303
     );
     attachSystemSessionCookie(
@@ -313,7 +315,7 @@ async function proxyCorporateRequest(request: Request, context: RouteContext) {
         if (retried.ok) {
           const retryPath = `/systems/gateway/corporate${retried.entryPath}`;
           const response = NextResponse.redirect(
-            new URL(retryPath, request.url),
+            new URL(retryPath, publicOrigin),
             303
           );
           attachSystemSessionCookie(

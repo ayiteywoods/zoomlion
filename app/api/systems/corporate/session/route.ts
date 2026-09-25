@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { CORPORATE_ORIGIN } from "@/lib/corporate-web-auth";
 import { finishSystemLaunch } from "@/lib/external-system-launch";
+import { getPublicRequestUrl } from "@/lib/public-request-url";
 import { createCorporateGatewaySession } from "@/lib/system-auth";
 import { getSystemLaunchConfig } from "@/lib/system-launch";
 import {
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     if (!phone || !password) {
       if (redirectOnSuccess) {
         return redirectAfterFormPost(
-          new URL("/login?from=/dashboard", request.url)
+          new URL("/login?from=/dashboard", getPublicRequestUrl(request))
         );
       }
       return NextResponse.json(

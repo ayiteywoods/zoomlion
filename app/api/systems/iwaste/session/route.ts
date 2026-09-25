@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { finishSystemLaunch } from "@/lib/external-system-launch";
 import { IWASTE_ORIGIN } from "@/lib/iwaste-web-auth";
+import { getPublicRequestUrl } from "@/lib/public-request-url";
 import { createIwasteGatewaySession } from "@/lib/system-auth";
 import { getSystemLaunchConfig } from "@/lib/system-launch";
 import { buildSystemSessionBootstrapHtml } from "@/lib/system-session-bootstrap";
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
     if (!phone || !password) {
       if (redirectOnSuccess) {
         return redirectAfterFormPost(
-          new URL("/login?from=/dashboard", request.url)
+          new URL("/login?from=/dashboard", getPublicRequestUrl(request))
         );
       }
       return NextResponse.json(

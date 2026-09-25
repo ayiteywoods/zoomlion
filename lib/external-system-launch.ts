@@ -1,4 +1,5 @@
 import type { NextResponse } from "next/server";
+import { getPublicOrigin, getPublicRequestUrl } from "@/lib/public-request-url";
 import { redirectAfterFormPost } from "@/lib/system-session-request";
 import { SYSTEM_SESSION_MAX_AGE } from "@/lib/system-session-seal";
 import { attachSystemSessionCookie } from "@/lib/system-session-cookie";
@@ -95,7 +96,8 @@ export function finishSystemLaunch({
   loginPhone,
   loginPassword,
 }: FinishLaunchOptions): NextResponse {
-  const requestHost = new URL(request.url).hostname;
+  const publicUrl = getPublicRequestUrl(request);
+  const requestHost = publicUrl.hostname || new URL(getPublicOrigin(request)).hostname;
   const forceGateway = process.env.USE_SYSTEM_GATEWAY === "true";
   const openDirect =
     process.env.OPEN_EXTERNAL_SYSTEM_URLS === "true" &&
@@ -113,7 +115,7 @@ export function finishSystemLaunch({
     return response;
   }
 
-  const response = redirectAfterFormPost(new URL(gatewayPath, request.url));
+  const response = redirectAfterFormPost(new URL(gatewayPath, publicUrl));
   attachSystemSessionCookie(
     response,
     sessionCookieName,
