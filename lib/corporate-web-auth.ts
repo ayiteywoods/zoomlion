@@ -8,7 +8,10 @@ import {
   type CookieJar,
 } from "@/lib/system-auth-cookies";
 import { CORPORATE_GATEWAY_PATH } from "@/lib/corporate-gateway-middleware";
-import { rewriteGatewayBaseHref } from "@/lib/gateway-route-methods";
+import {
+  rewriteGatewayBaseHref,
+  rewriteGatewayRootRelativeAssets,
+} from "@/lib/gateway-route-methods";
 import { injectGatewayNavigation } from "@/lib/gateway-navigation-inject";
 
 export const CORPORATE_ORIGIN = "https://corporate.adudor.com";
@@ -104,6 +107,7 @@ export function rewriteCorporateGatewayHtml(
     (_, quote: string) => `href=${quote}${prefix}${quote}`
   );
 
+  // Root-relative page links (exclude static assets — handled below via src/href assets helper)
   out = out.replace(
     new RegExp(`href="/${staticExclusion}([^"]*)"`, "g"),
     `href="${prefix}/$1"`
@@ -120,6 +124,10 @@ export function rewriteCorporateGatewayHtml(
     new RegExp(`action='/${staticExclusion}([^']*)'`, "g"),
     `action='${prefix}/$1'`
   );
+
+  // Always rewrite root-relative JS/CSS/images onto the gateway (staticExclusion
+  // above would otherwise leave /js/... and /css/... on the hub domain → load errors).
+  out = rewriteGatewayRootRelativeAssets(out, prefix);
 
   // Avoid GET navigation to /login (upstream returns 405). Form POST to /login is kept.
   out = out.replace(new RegExp(`href="${prefix}/login/?"`, "gi"), `href="${prefix}"`);

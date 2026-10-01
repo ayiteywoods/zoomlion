@@ -1,4 +1,4 @@
-import { rewriteGatewayBaseHref } from "@/lib/gateway-route-methods";
+import { rewriteGatewayBaseHref, rewriteGatewayRootRelativeAssets } from "@/lib/gateway-route-methods";
 import { injectGatewayNavigation } from "@/lib/gateway-navigation-inject";
 import {
   cookieJarToHeader,
@@ -173,6 +173,7 @@ export function rewriteSipGatewayHtml(
     .replace(/href="\/(?!\/)/g, `href="${gatewayPrefix}/`)
     .replace(/action="\/(?!\/)/g, `action="${gatewayPrefix}/`);
 
+  out = rewriteGatewayRootRelativeAssets(out, prefix);
   out = rewriteGatewayBaseHref(out, prefix, SIP_ORIGIN);
   out = injectGatewayNavigation(
     out,

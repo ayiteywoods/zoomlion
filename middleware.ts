@@ -28,6 +28,33 @@ import {
   SIP_SESSION_COOKIE,
 } from "@/lib/system-session-constants";
 
+const STATIC_ASSET_RE =
+  /\.(?:js|mjs|css|map|woff2?|ttf|eot|png|jpe?g|gif|svg|ico|webp|json)(?:$|\?)/i;
+
+function gatewayPrefixFromReferer(
+  referer: string | null,
+  requestUrl: string
+): string | null {
+  if (!referer) return null;
+  try {
+    const ref = new URL(referer);
+    const req = new URL(requestUrl);
+    if (ref.origin !== req.origin) return null;
+    if (ref.pathname.startsWith("/systems/gateway/iwaste")) {
+      return "/systems/gateway/iwaste";
+    }
+    if (ref.pathname.startsWith("/systems/gateway/corporate")) {
+      return "/systems/gateway/corporate";
+    }
+    if (ref.pathname.startsWith("/systems/gateway/sip")) {
+      return "/systems/gateway/sip";
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
 function hasSystemGatewaySession(request: NextRequest): boolean {
   return Boolean(
     request.cookies.get(IWASTE_SESSION_COOKIE)?.value ||
@@ -117,6 +144,27 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAuthenticated = isSessionActive(request);
   const hadAuthCookie = request.cookies.get(AUTH_COOKIE)?.value === "1";
+
+  // Safety net: root-relative /js /css assets requested while browsing a gateway
+  // page should load through that gateway, not the hub (which returns login HTML).
+  if (
+    !pathname.startsWith("/systems/gateway/") &&
+    !pathname.startsWith("/_next/") &&
+    STATIC_ASSET_RE.test(pathname)
+  ) {
+    const gatewayPrefix = gatewayPrefixFromReferer(
+      request.headers.get("referer"),
+      request.url
+    );
+    if (gatewayPrefix) {
+      const assetUrl = new URL(
+        `${gatewayPrefix}${pathname}`,
+        request.nextUrl.origin
+      );
+      assetUrl.search = request.nextUrl.search;
+      return NextResponse.redirect(assetUrl, 302);
+    }
+  }
 
   if (hadAuthCookie && !isAuthenticated && !isPublicPath(pathname)) {
     const loginUrl = new URL("/login", request.url);

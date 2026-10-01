@@ -1,5 +1,6 @@
 import {
   rewriteGatewayBaseHref,
+  rewriteGatewayRootRelativeAssets,
 } from "@/lib/gateway-route-methods";
 import { injectGatewayNavigation } from "@/lib/gateway-navigation-inject";
 import {
@@ -106,6 +107,7 @@ export function rewriteIwasteGatewayHtml(
     .replace(/href="\/(?!\/)/g, `href="${prefix}/`)
     .replace(/action="\/(?!\/)/g, `action="${prefix}/`);
 
+  out = rewriteGatewayRootRelativeAssets(out, prefix);
   out = rewriteGatewayBaseHref(out, prefix, IWASTE_ORIGIN);
   out = injectGatewayNavigation(out, gatewayPath, {}, IWASTE_ORIGIN);
   return out;
